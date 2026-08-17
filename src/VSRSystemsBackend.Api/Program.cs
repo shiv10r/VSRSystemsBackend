@@ -1,0 +1,114 @@
+using Serilog;
+using Microsoft.EntityFrameworkCore;
+using FluentValidation.AspNetCore;
+using VSRSystemsBackend.Infrastructure.Persistence;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Serilog configuration
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+// Add services to the container
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+    });
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "VSR Systems Backend API", Version = "v1" });
+});
+
+// Database
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// AutoMapper
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+// MediatR
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
+    typeof(VSRSystemsBackend.Application.Warehouse.Services.WarehouseService).Assembly));
+
+// FluentValidation
+builder.Services.AddFluentValidationAutoValidation();
+
+// Repository registrations
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IWarehouseRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.WarehouseRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.ILocationBinRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.LocationBinRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IInventoryRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.InventoryRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.ISupplierRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.SupplierRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.ICustomerRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.CustomerRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IPurchaseOrderRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.PurchaseOrderRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IGrnRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.GrnRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.ISalesOrderRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.SalesOrderRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IStockTransferRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.StockTransferRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IPickListRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.PickListRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IPackageRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.PackageRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IDispatchRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.DispatchRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IReturnRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.ReturnRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IStockCountRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.StockCountRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IStaffRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.StaffRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IProjectRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.ProjectRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IStockMovementRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.StockMovementRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IStockAdjustmentRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.StockAdjustmentRepository>();
+
+// Service registrations
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IWarehouseService, VSRSystemsBackend.Application.Warehouse.Services.WarehouseService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.ILocationBinService, VSRSystemsBackend.Application.Warehouse.Services.LocationBinService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IInventoryService, VSRSystemsBackend.Application.Warehouse.Services.InventoryService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.ISupplierService, VSRSystemsBackend.Application.Warehouse.Services.SupplierService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.ICustomerService, VSRSystemsBackend.Application.Warehouse.Services.CustomerService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IPurchaseOrderService, VSRSystemsBackend.Application.Warehouse.Services.PurchaseOrderService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.ISalesOrderService, VSRSystemsBackend.Application.Warehouse.Services.SalesOrderService>();
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(
+                builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() 
+                ?? new[] { "http://localhost:5173", "http://localhost:3000" })
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
+});
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "VSR Systems Backend API v1");
+        c.RoutePrefix = "swagger";
+    });
+}
+
+app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
+app.UseSerilogRequestLogging();
+app.UseAuthorization();
+app.MapControllers();
+
+// Ensure database is created
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await context.Database.EnsureCreatedAsync();
+}
+
+app.Run();

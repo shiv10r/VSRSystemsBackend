@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\VSRSystemsBackend.Api\VSRSystemsBackend.Api.csproj" />
+    <ProjectReference Include="..\..\src\VSRSystemsBackend.Infrastructure\VSRSystemsBackend.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.*" />
+    <PackageReference Include="xunit" Version="2.7.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.*" />
+    <PackageReference Include="FluentAssertions" Version="6.12.*" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="3.7.*" />
+    <PackageReference Include="Respawn" Version="6.1.*" />
+  </ItemGroup>
+
+</Project>

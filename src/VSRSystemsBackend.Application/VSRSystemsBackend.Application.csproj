@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VSRSystemsBackend.Domain\VSRSystemsBackend.Domain.csproj" />
+    <ProjectReference Include="..\VSRSystemsBackend.Core\VSRSystemsBackend.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.9.*" />
+    <PackageReference Include="MediatR" Version="12.2.*" />
+    <PackageReference Include="AutoMapper" Version="13.0.*" />
+  </ItemGroup>
+
+</Project>
