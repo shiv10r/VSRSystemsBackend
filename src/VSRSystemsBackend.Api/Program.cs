@@ -2,6 +2,7 @@ using Serilog;
 using Microsoft.EntityFrameworkCore;
 using FluentValidation.AspNetCore;
 using VSRSystemsBackend.Infrastructure.Persistence;
+using VSRSystemsBackend.Infrastructure.Data.Seeds;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -143,6 +144,7 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await context.Database.EnsureCreatedAsync();
+    await HomeServicesSeeder.SeedAsync(context);
 }
 
 app.Run();

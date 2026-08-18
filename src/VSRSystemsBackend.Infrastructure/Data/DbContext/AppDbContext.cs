@@ -10,7 +10,20 @@ using VSRSystemsBackend.Domain.Jobs;
 using VSRSystemsBackend.Domain.Medical;
 using VSRSystemsBackend.Domain.News;
 using VSRSystemsBackend.Domain.Travel;
+using VSRSystemsBackend.Domain.HomeServices;
 using VSRSystemsBackend.Infrastructure.Data.Configurations;
+// Aliases for HomeServices entities whose names collide with other domains
+using HsBooking = VSRSystemsBackend.Domain.HomeServices.Booking;
+using HsReview = VSRSystemsBackend.Domain.HomeServices.Review;
+using HsCustomer = VSRSystemsBackend.Domain.HomeServices.Customer;
+using HsNotification = VSRSystemsBackend.Domain.HomeServices.Notification;
+using HsAuditLog = VSRSystemsBackend.Domain.HomeServices.AuditLog;
+// Aliases for pre-existing domain entities now shadowed by the HomeServices import
+using WarehouseCustomer = VSRSystemsBackend.Domain.Warehouse.Customer;
+using SchoolNotification = VSRSystemsBackend.Domain.School.Notification;
+using SchoolAuditLog = VSRSystemsBackend.Domain.School.AuditLog;
+using CommerceReview = VSRSystemsBackend.Domain.Commerce.Review;
+using TravelBooking = VSRSystemsBackend.Domain.Travel.Booking;
 
 namespace VSRSystemsBackend.Infrastructure.Persistence;
 
@@ -25,7 +38,7 @@ public class AppDbContext : DbContext
     public DbSet<LocationBin> LocationBins => Set<LocationBin>();
     public DbSet<InventoryItem> InventoryItems => Set<InventoryItem>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
-    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<WarehouseCustomer> Customers => Set<WarehouseCustomer>();
     public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
     public DbSet<PurchaseOrderLine> PurchaseOrderLines => Set<PurchaseOrderLine>();
     public DbSet<GrnRecord> GrnRecords => Set<GrnRecord>();
@@ -113,7 +126,7 @@ public class AppDbContext : DbContext
     public DbSet<Notice> Notices => Set<Notice>();
     public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
     public DbSet<Message> Messages => Set<Message>();
-    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<SchoolNotification> Notifications => Set<SchoolNotification>();
     public DbSet<PTMSession> PTMSessions => Set<PTMSession>();
     public DbSet<Survey> Surveys => Set<Survey>();
     public DbSet<DocumentRecord> DocumentRecords => Set<DocumentRecord>();
@@ -124,7 +137,7 @@ public class AppDbContext : DbContext
     public DbSet<IncidentRecord> IncidentRecords => Set<IncidentRecord>();
     public DbSet<TaskItem> TaskItems => Set<TaskItem>();
     public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
-    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<SchoolAuditLog> AuditLogs => Set<SchoolAuditLog>();
     public DbSet<SchoolSetting> SchoolSettings => Set<SchoolSetting>();
 
     // Hotel Domain
@@ -155,7 +168,7 @@ public class AppDbContext : DbContext
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Offer> Offers => Set<Offer>();
-    public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<CommerceReview> Reviews => Set<CommerceReview>();
 
     // Jobs Domain
     public DbSet<Job> Jobs => Set<Job>();
@@ -191,10 +204,77 @@ public class AppDbContext : DbContext
     // Travel Domain
     public DbSet<TravelPackage> TravelPackages => Set<TravelPackage>();
     public DbSet<Destination> Destinations => Set<Destination>();
-    public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<TravelBooking> Bookings => Set<TravelBooking>();
     public DbSet<GroupTrip> GroupTrips => Set<GroupTrip>();
     public DbSet<TravelWishlist> TravelWishlists => Set<TravelWishlist>();
     public DbSet<TravelWishlistItem> TravelWishlistItems => Set<TravelWishlistItem>();
+
+    // HomeServices Domain
+    public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();
+    public DbSet<Service> Services => Set<Service>();
+    public DbSet<ServiceProblem> ServiceProblems => Set<ServiceProblem>();
+    public DbSet<ServicePackage> ServicePackages => Set<ServicePackage>();
+    public DbSet<ServiceAddOn> ServiceAddOns => Set<ServiceAddOn>();
+    public DbSet<ServicePackageAddOn> ServicePackageAddOns => Set<ServicePackageAddOn>();
+    public DbSet<ServiceWarranty> ServiceWarranties => Set<ServiceWarranty>();
+    public DbSet<City> Cities => Set<City>();
+    public DbSet<Zone> Zones => Set<Zone>();
+    public DbSet<Locality> Localities => Set<Locality>();
+    public DbSet<Pincode> Pincodes => Set<Pincode>();
+    public DbSet<ServiceArea> ServiceAreas => Set<ServiceArea>();
+    public DbSet<ServiceAreaService> ServiceAreaServices => Set<ServiceAreaService>();
+    public DbSet<Professional> Professionals => Set<Professional>();
+    public DbSet<ProfessionalDocument> ProfessionalDocuments => Set<ProfessionalDocument>();
+    public DbSet<ProfessionalSkill> ProfessionalSkills => Set<ProfessionalSkill>();
+    public DbSet<ProfessionalServiceArea> ProfessionalServiceAreas => Set<ProfessionalServiceArea>();
+    public DbSet<ProfessionalAvailability> ProfessionalAvailabilities => Set<ProfessionalAvailability>();
+    public DbSet<ProfessionalTimeOff> ProfessionalTimeOffs => Set<ProfessionalTimeOff>();
+    public DbSet<ProfessionalPerformance> ProfessionalPerformances => Set<ProfessionalPerformance>();
+    public DbSet<HsBooking> HomeServiceBookings => Set<HsBooking>();
+    public DbSet<BookingItem> BookingItems => Set<BookingItem>();
+    public DbSet<BookingAddOn> BookingAddOns => Set<BookingAddOn>();
+    public DbSet<BookingMaterial> BookingMaterials => Set<BookingMaterial>();
+    public DbSet<BookingAssignment> BookingAssignments => Set<BookingAssignment>();
+    public DbSet<BookingStatusHistory> BookingStatusHistories => Set<BookingStatusHistory>();
+    public DbSet<BookingNote> BookingNotes => Set<BookingNote>();
+    public DbSet<RecurringBooking> RecurringBookings => Set<RecurringBooking>();
+    public DbSet<AmcContract> AmcContracts => Set<AmcContract>();
+    public DbSet<PriceRule> PriceRules => Set<PriceRule>();
+    public DbSet<PriceQuote> PriceQuotes => Set<PriceQuote>();
+    public DbSet<QuoteRevision> QuoteRevisions => Set<QuoteRevision>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<Refund> Refunds => Set<Refund>();
+    public DbSet<CreditTransaction> CreditTransactions => Set<CreditTransaction>();
+    public DbSet<CommissionRule> CommissionRules => Set<CommissionRule>();
+    public DbSet<ProfessionalEarning> ProfessionalEarnings => Set<ProfessionalEarning>();
+    public DbSet<Payout> Payouts => Set<Payout>();
+    public DbSet<ProfessionalAdjustment> ProfessionalAdjustments => Set<ProfessionalAdjustment>();
+    public DbSet<ProfessionalIncentive> ProfessionalIncentives => Set<ProfessionalIncentive>();
+    public DbSet<PaymentGatewayWebhookEvent> PaymentGatewayWebhookEvents => Set<PaymentGatewayWebhookEvent>();
+    public DbSet<PaymentGatewaySetting> PaymentGatewaySettings => Set<PaymentGatewaySetting>();
+    public DbSet<Coupon> Coupons => Set<Coupon>();
+    public DbSet<CouponRedemption> CouponRedemptions => Set<CouponRedemption>();
+    public DbSet<Referral> Referrals => Set<Referral>();
+    public DbSet<MembershipPlan> MembershipPlans => Set<MembershipPlan>();
+    public DbSet<CustomerMembership> CustomerMemberships => Set<CustomerMembership>();
+    public DbSet<HsReview> HomeServiceReviews => Set<HsReview>();
+    public DbSet<ReviewMedia> ReviewMedia => Set<ReviewMedia>();
+    public DbSet<User> HomeServiceUsers => Set<User>();
+    public DbSet<Role> HomeServiceRoles => Set<Role>();
+    public DbSet<UserRole> HomeServiceUserRoles => Set<UserRole>();
+    public DbSet<Permission> HomeServicePermissions => Set<Permission>();
+    public DbSet<RolePermission> HomeServiceRolePermissions => Set<RolePermission>();
+    public DbSet<HsCustomer> HomeServiceCustomers => Set<HsCustomer>();
+    public DbSet<CustomerAddress> HomeServiceCustomerAddresses => Set<CustomerAddress>();
+    public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
+    public DbSet<Dispute> Disputes => Set<Dispute>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<ConversationMessage> ConversationMessages => Set<ConversationMessage>();
+    public DbSet<HsNotification> HomeServiceNotifications => Set<HsNotification>();
+    public DbSet<CmsPage> CmsPages => Set<CmsPage>();
+    public DbSet<Banner> Banners => Set<Banner>();
+    public DbSet<Faq> Faqs => Set<Faq>();
+    public DbSet<HsAuditLog> HomeServiceAuditLogs => Set<HsAuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
