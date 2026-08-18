@@ -54,6 +54,7 @@ public class CompanyRepository : ICompanyRepository
     {
         entity.CreatedAt = DateTime.UtcNow;
         await _context.Companies.AddAsync(entity, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
         return entity;
     }
 
@@ -64,13 +65,14 @@ public class CompanyRepository : ICompanyRepository
             entity.CreatedAt = DateTime.UtcNow;
         }
         await _context.Companies.AddRangeAsync(entities, cancellationToken);
+    await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task UpdateAsync(Company entity, CancellationToken cancellationToken = default)
     {
         entity.UpdatedAt = DateTime.UtcNow;
         _context.Companies.Update(entity);
-        await Task.CompletedTask;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(Company entity, CancellationToken cancellationToken = default)
@@ -78,7 +80,7 @@ public class CompanyRepository : ICompanyRepository
         entity.IsDeleted = true;
         entity.UpdatedAt = DateTime.UtcNow;
         _context.Companies.Update(entity);
-        await Task.CompletedTask;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteRangeAsync(IEnumerable<Company> entities, CancellationToken cancellationToken = default)
@@ -89,7 +91,7 @@ public class CompanyRepository : ICompanyRepository
             entity.UpdatedAt = DateTime.UtcNow;
         }
         _context.Companies.UpdateRange(entities);
-        await Task.CompletedTask;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<int> CountAsync(Expression<Func<Company, bool>>? predicate = null, CancellationToken cancellationToken = default)

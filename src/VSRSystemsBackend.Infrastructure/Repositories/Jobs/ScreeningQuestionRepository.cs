@@ -48,6 +48,7 @@ public class ScreeningQuestionRepository : IScreeningQuestionRepository
     {
         entity.CreatedAt = DateTime.UtcNow;
         await _context.ScreeningQuestions.AddAsync(entity, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
         return entity;
     }
 
@@ -58,13 +59,14 @@ public class ScreeningQuestionRepository : IScreeningQuestionRepository
             entity.CreatedAt = DateTime.UtcNow;
         }
         await _context.ScreeningQuestions.AddRangeAsync(entities, cancellationToken);
+    await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task UpdateAsync(ScreeningQuestion entity, CancellationToken cancellationToken = default)
     {
         entity.UpdatedAt = DateTime.UtcNow;
         _context.ScreeningQuestions.Update(entity);
-        await Task.CompletedTask;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(ScreeningQuestion entity, CancellationToken cancellationToken = default)
@@ -72,7 +74,7 @@ public class ScreeningQuestionRepository : IScreeningQuestionRepository
         entity.IsDeleted = true;
         entity.UpdatedAt = DateTime.UtcNow;
         _context.ScreeningQuestions.Update(entity);
-        await Task.CompletedTask;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteRangeAsync(IEnumerable<ScreeningQuestion> entities, CancellationToken cancellationToken = default)
@@ -83,7 +85,7 @@ public class ScreeningQuestionRepository : IScreeningQuestionRepository
             entity.UpdatedAt = DateTime.UtcNow;
         }
         _context.ScreeningQuestions.UpdateRange(entities);
-        await Task.CompletedTask;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<int> CountAsync(Expression<Func<ScreeningQuestion, bool>>? predicate = null, CancellationToken cancellationToken = default)

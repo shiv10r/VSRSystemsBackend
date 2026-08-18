@@ -53,6 +53,7 @@ public class CandidateRepository : ICandidateRepository
     {
         entity.CreatedAt = DateTime.UtcNow;
         await _context.Candidates.AddAsync(entity, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
         return entity;
     }
 
@@ -63,13 +64,14 @@ public class CandidateRepository : ICandidateRepository
             entity.CreatedAt = DateTime.UtcNow;
         }
         await _context.Candidates.AddRangeAsync(entities, cancellationToken);
+    await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task UpdateAsync(Candidate entity, CancellationToken cancellationToken = default)
     {
         entity.UpdatedAt = DateTime.UtcNow;
         _context.Candidates.Update(entity);
-        await Task.CompletedTask;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(Candidate entity, CancellationToken cancellationToken = default)
@@ -77,7 +79,7 @@ public class CandidateRepository : ICandidateRepository
         entity.IsDeleted = true;
         entity.UpdatedAt = DateTime.UtcNow;
         _context.Candidates.Update(entity);
-        await Task.CompletedTask;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteRangeAsync(IEnumerable<Candidate> entities, CancellationToken cancellationToken = default)
@@ -88,7 +90,7 @@ public class CandidateRepository : ICandidateRepository
             entity.UpdatedAt = DateTime.UtcNow;
         }
         _context.Candidates.UpdateRange(entities);
-        await Task.CompletedTask;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<int> CountAsync(Expression<Func<Candidate, bool>>? predicate = null, CancellationToken cancellationToken = default)

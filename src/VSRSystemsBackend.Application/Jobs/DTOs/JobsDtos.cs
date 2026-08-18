@@ -22,6 +22,35 @@ public class JobDto
     public string Status { get; set; } = string.Empty;
     public DateTime? PublishedAt { get; set; }
     public DateTime? ExpiresAt { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public string CompanyInitials { get; set; } = string.Empty;
+    public string? Industry { get; set; }
+    public string? City { get; set; }
+    public string? State { get; set; }
+    public string Country { get; set; } = "India";
+    public string ExperienceText { get; set; } = string.Empty;
+    public int MinExperience { get; set; }
+    public int MaxExperience { get; set; }
+    public string SalaryText { get; set; } = string.Empty;
+    public bool SalaryVisible { get; set; }
+    public string WorkMode { get; set; } = "On-site";
+    public string EmploymentType { get; set; } = "Full-time";
+    public string Summary { get; set; } = string.Empty;
+    public string SkillsJson { get; set; } = "[]";
+    public string ResponsibilitiesJson { get; set; } = "[]";
+    public string BenefitsJson { get; set; } = "[]";
+    public string ApplicationMode { get; set; } = "EasyApply";
+    public string? ExternalApplyUrl { get; set; }
+    public string? OriginalSourceUrl { get; set; }
+    public string? SourceType { get; set; }
+    public bool IsAggregated { get; set; }
+    public bool Featured { get; set; }
+    public bool Verified { get; set; }
+    public string? ExternalJobId { get; set; }
+    public string? PrimaryJobSourceId { get; set; }
+    public string? PostedAtSource { get; set; }
+    public DateTime? LastSeenAtSource { get; set; }
+    public string CanonicalFingerprint { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }

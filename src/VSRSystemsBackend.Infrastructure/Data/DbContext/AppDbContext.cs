@@ -164,6 +164,14 @@ public class AppDbContext : DbContext
     public DbSet<Candidate> Candidates => Set<Candidate>();
     public DbSet<SavedJob> SavedJobs => Set<SavedJob>();
     public DbSet<ScreeningQuestion> ScreeningQuestions => Set<ScreeningQuestion>();
+    public DbSet<JobSource> JobSources => Set<JobSource>();
+    public DbSet<JobSourceConfig> JobSourceConfigs => Set<JobSourceConfig>();
+    public DbSet<RawExternalJob> RawExternalJobs => Set<RawExternalJob>();
+    public DbSet<ScrapeRun> ScrapeRuns => Set<ScrapeRun>();
+    public DbSet<ScrapeLog> ScrapeLogs => Set<ScrapeLog>();
+    public DbSet<JobSourceMapping> JobSourceMappings => Set<JobSourceMapping>();
+    public DbSet<DuplicateCandidate> DuplicateCandidates => Set<DuplicateCandidate>();
+    public DbSet<IngestionError> IngestionErrors => Set<IngestionError>();
 
     // Medical Domain
     public DbSet<Patient> Patients => Set<Patient>();

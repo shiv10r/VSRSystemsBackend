@@ -27,6 +27,35 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
         builder.Property(j => j.Status).HasMaxLength(20).HasDefaultValue("draft");
         builder.Property(j => j.PublishedAt);
         builder.Property(j => j.ExpiresAt);
+        builder.Property(j => j.CompanyName).HasMaxLength(200);
+        builder.Property(j => j.CompanyInitials).HasMaxLength(10);
+        builder.Property(j => j.Industry).HasMaxLength(100);
+        builder.Property(j => j.City).HasMaxLength(100);
+        builder.Property(j => j.State).HasMaxLength(100);
+        builder.Property(j => j.Country).HasMaxLength(50).HasDefaultValue("India");
+        builder.Property(j => j.ExperienceText).HasMaxLength(30);
+        builder.Property(j => j.MinExperience).HasDefaultValue(0);
+        builder.Property(j => j.MaxExperience).HasDefaultValue(0);
+        builder.Property(j => j.SalaryText).HasMaxLength(100);
+        builder.Property(j => j.SalaryVisible).HasDefaultValue(false);
+        builder.Property(j => j.WorkMode).HasMaxLength(20).HasDefaultValue("On-site");
+        builder.Property(j => j.EmploymentType).HasMaxLength(20).HasDefaultValue("Full-time");
+        builder.Property(j => j.Summary).HasMaxLength(500);
+        builder.Property(j => j.SkillsJson).HasColumnType("text").HasDefaultValue("[]");
+        builder.Property(j => j.ResponsibilitiesJson).HasColumnType("text").HasDefaultValue("[]");
+        builder.Property(j => j.BenefitsJson).HasColumnType("text").HasDefaultValue("[]");
+        builder.Property(j => j.ApplicationMode).HasMaxLength(20).HasDefaultValue("EasyApply");
+        builder.Property(j => j.ExternalApplyUrl).HasMaxLength(1000);
+        builder.Property(j => j.OriginalSourceUrl).HasMaxLength(1000);
+        builder.Property(j => j.SourceType).HasMaxLength(30);
+        builder.Property(j => j.IsAggregated).HasDefaultValue(false);
+        builder.Property(j => j.Featured).HasDefaultValue(false);
+        builder.Property(j => j.Verified).HasDefaultValue(false);
+        builder.Property(j => j.ExternalJobId).HasMaxLength(200);
+        builder.Property(j => j.PrimaryJobSourceId).HasMaxLength(50);
+        builder.Property(j => j.PostedAtSource).HasMaxLength(100);
+        builder.Property(j => j.LastSeenAtSource);
+        builder.Property(j => j.CanonicalFingerprint).HasMaxLength(64);
         builder.Property(j => j.CreatedAt).HasDefaultValueSql("NOW()");
         builder.Property(j => j.UpdatedAt);
         builder.Property(j => j.IsDeleted).HasDefaultValue(false);
@@ -36,6 +65,8 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
         builder.HasIndex(j => j.Category);
         builder.HasIndex(j => j.Status);
         builder.HasIndex(j => j.PublishedAt);
+        builder.HasIndex(j => j.CanonicalFingerprint).HasFilter("\"IsDeleted\" = false");
+        builder.HasIndex(j => j.PrimaryJobSourceId);
     }
 }
 

@@ -55,6 +55,79 @@ public class Job : AuditableEntity<string>
     public DateTime? PublishedAt { get; set; }
     public DateTime? ExpiresAt { get; set; }
 
+    // Aggregated / scraper fields (mirrors frontend JobListing contract)
+    [MaxLength(200)]
+    public string CompanyName { get; set; } = string.Empty;
+
+    [MaxLength(10)]
+    public string CompanyInitials { get; set; } = string.Empty;
+
+    [MaxLength(100)]
+    public string? Industry { get; set; }
+
+    [MaxLength(100)]
+    public string? City { get; set; }
+
+    [MaxLength(100)]
+    public string? State { get; set; }
+
+    [MaxLength(50)]
+    public string Country { get; set; } = "India";
+
+    [MaxLength(30)]
+    public string ExperienceText { get; set; } = string.Empty;
+
+    public int MinExperience { get; set; }
+    public int MaxExperience { get; set; }
+
+    [MaxLength(100)]
+    public string SalaryText { get; set; } = string.Empty;
+
+    public bool SalaryVisible { get; set; }
+
+    [MaxLength(20)]
+    public string WorkMode { get; set; } = "On-site";
+
+    [MaxLength(20)]
+    public string EmploymentType { get; set; } = "Full-time";
+
+    [MaxLength(500)]
+    public string Summary { get; set; } = string.Empty;
+
+    public string SkillsJson { get; set; } = "[]";
+    public string ResponsibilitiesJson { get; set; } = "[]";
+    public string BenefitsJson { get; set; } = "[]";
+
+    [MaxLength(20)]
+    public string ApplicationMode { get; set; } = "EasyApply";
+
+    [MaxLength(1000)]
+    public string? ExternalApplyUrl { get; set; }
+
+    [MaxLength(1000)]
+    public string? OriginalSourceUrl { get; set; }
+
+    [MaxLength(30)]
+    public string? SourceType { get; set; }
+
+    public bool IsAggregated { get; set; }
+    public bool Featured { get; set; }
+    public bool Verified { get; set; }
+
+    [MaxLength(200)]
+    public string? ExternalJobId { get; set; }
+
+    [MaxLength(50)]
+    public string? PrimaryJobSourceId { get; set; }
+
+    [MaxLength(100)]
+    public string? PostedAtSource { get; set; }
+
+    public DateTime? LastSeenAtSource { get; set; }
+
+    [MaxLength(64)]
+    public string CanonicalFingerprint { get; set; } = string.Empty;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public bool IsDeleted { get; set; } = false;

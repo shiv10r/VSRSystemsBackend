@@ -84,6 +84,7 @@ public class JobRepository : IJobRepository
     {
         entity.CreatedAt = DateTime.UtcNow;
         await _context.Jobs.AddAsync(entity, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
         return entity;
     }
 
@@ -94,13 +95,14 @@ public class JobRepository : IJobRepository
             entity.CreatedAt = DateTime.UtcNow;
         }
         await _context.Jobs.AddRangeAsync(entities, cancellationToken);
+    await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task UpdateAsync(Job entity, CancellationToken cancellationToken = default)
     {
         entity.UpdatedAt = DateTime.UtcNow;
         _context.Jobs.Update(entity);
-        await Task.CompletedTask;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(Job entity, CancellationToken cancellationToken = default)
@@ -108,7 +110,7 @@ public class JobRepository : IJobRepository
         entity.IsDeleted = true;
         entity.UpdatedAt = DateTime.UtcNow;
         _context.Jobs.Update(entity);
-        await Task.CompletedTask;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteRangeAsync(IEnumerable<Job> entities, CancellationToken cancellationToken = default)
@@ -119,7 +121,7 @@ public class JobRepository : IJobRepository
             entity.UpdatedAt = DateTime.UtcNow;
         }
         _context.Jobs.UpdateRange(entities);
-        await Task.CompletedTask;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<int> CountAsync(Expression<Func<Job, bool>>? predicate = null, CancellationToken cancellationToken = default)
