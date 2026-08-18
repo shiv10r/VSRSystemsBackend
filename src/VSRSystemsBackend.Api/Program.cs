@@ -70,6 +70,24 @@ builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.ICandid
 builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.ISavedJobRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.SavedJobRepository>();
 builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IScreeningQuestionRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.ScreeningQuestionRepository>();
 
+// Jobs scraper repository registrations
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IJobSourceRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.JobSourceRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IJobSourceConfigRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.JobSourceConfigRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IRawExternalJobRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.RawExternalJobRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IScrapeRunRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.ScrapeRunRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IScrapeLogRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.ScrapeLogRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IJobSourceMappingRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.JobSourceMappingRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IDuplicateCandidateRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.DuplicateCandidateRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IIngestionErrorRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.IngestionErrorRepository>();
+
+// Jobs scraper service
+builder.Services.AddHttpClient<VSRSystemsBackend.Application.Jobs.Interfaces.IJobsScraperService, VSRSystemsBackend.Application.Jobs.Services.JobsScraperService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.Add("Accept", "application/json, application/xml, text/html, */*");
+});
+builder.Services.AddHostedService<VSRSystemsBackend.Api.Services.JobsScraperScheduler>();
+
 // Jobs service registrations
 builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IJobService, VSRSystemsBackend.Application.Jobs.Services.JobService>();
 builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.ICompanyService, VSRSystemsBackend.Application.Jobs.Services.CompanyService>();

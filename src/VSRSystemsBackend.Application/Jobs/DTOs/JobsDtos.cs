@@ -22,7 +22,6 @@ public class JobDto
     public string Status { get; set; } = string.Empty;
     public DateTime? PublishedAt { get; set; }
     public DateTime? ExpiresAt { get; set; }
-    public string CompanyName { get; set; } = string.Empty;
     public string CompanyInitials { get; set; } = string.Empty;
     public string? Industry { get; set; }
     public string? City { get; set; }
