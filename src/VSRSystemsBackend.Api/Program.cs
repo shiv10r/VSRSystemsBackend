@@ -62,6 +62,22 @@ builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IP
 builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IStockMovementRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.StockMovementRepository>();
 builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IStockAdjustmentRepository, VSRSystemsBackend.Infrastructure.Repositories.Warehouse.StockAdjustmentRepository>();
 
+// Jobs repository registrations
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IJobRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.JobRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.ICompanyRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.CompanyRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IJobApplicationRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.JobApplicationRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.ICandidateRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.CandidateRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.ISavedJobRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.SavedJobRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IScreeningQuestionRepository, VSRSystemsBackend.Infrastructure.Repositories.Jobs.ScreeningQuestionRepository>();
+
+// Jobs service registrations
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IJobService, VSRSystemsBackend.Application.Jobs.Services.JobService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.ICompanyService, VSRSystemsBackend.Application.Jobs.Services.CompanyService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IJobApplicationService, VSRSystemsBackend.Application.Jobs.Services.JobApplicationService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.ICandidateService, VSRSystemsBackend.Application.Jobs.Services.CandidateService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.ISavedJobService, VSRSystemsBackend.Application.Jobs.Services.SavedJobService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IScreeningQuestionService, VSRSystemsBackend.Application.Jobs.Services.ScreeningQuestionService>();
+
 // Service registrations
 builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IWarehouseService, VSRSystemsBackend.Application.Warehouse.Services.WarehouseService>();
 builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.ILocationBinService, VSRSystemsBackend.Application.Warehouse.Services.LocationBinService>();
