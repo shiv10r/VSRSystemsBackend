@@ -33,4 +33,4 @@ ENV DOTNET_GCHeapHardLimit=400000000
 ENV DOTNET_GCServer=0
 ENV COMPlus_GCHeapHardLimit=400000000
 ENV COMPlus_GCServer=0
-ENTRYPOINT ["dotnet", "--gcserver=0", "--gcheaplimit=400000000", "VSRSystemsBackend.Api.dll"]
+ENTRYPOINT ["dotnet", "VSRSystemsBackend.Api.dll"]
