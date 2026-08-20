@@ -139,12 +139,15 @@ app.UseSerilogRequestLogging();
 app.UseAuthorization();
 app.MapControllers();
 
-// Ensure database is created
+// Ensure database is created (skip seeder in production to save memory)
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await context.Database.EnsureCreatedAsync();
-    await HomeServicesSeeder.SeedAsync(context);
+    if (app.Environment.IsDevelopment())
+    {
+        await HomeServicesSeeder.SeedAsync(context);
+    }
 }
 
 app.Run();

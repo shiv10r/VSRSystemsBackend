@@ -29,4 +29,8 @@ COPY --from=build /app/publish .
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 ENV DOTNET_USE_POLLING_FILE_WATCHER=1
-ENTRYPOINT ["dotnet", "VSRSystemsBackend.Api.dll"]
+ENV DOTNET_GCHeapHardLimit=400000000
+ENV DOTNET_GCServer=0
+ENV COMPlus_GCHeapHardLimit=400000000
+ENV COMPlus_GCServer=0
+ENTRYPOINT ["dotnet", "--gcserver=0", "--gcheaplimit=400000000", "VSRSystemsBackend.Api.dll"]
