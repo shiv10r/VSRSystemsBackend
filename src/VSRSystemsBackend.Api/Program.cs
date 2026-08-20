@@ -106,6 +106,45 @@ builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IC
 builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.IPurchaseOrderService, VSRSystemsBackend.Application.Warehouse.Services.PurchaseOrderService>();
 builder.Services.AddScoped<VSRSystemsBackend.Application.Warehouse.Interfaces.ISalesOrderService, VSRSystemsBackend.Application.Warehouse.Services.SalesOrderService>();
 
+// HomeServices repository registrations
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IServiceCatalogRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.ServiceCatalogRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.ILocationRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.LocationRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IProfessionalRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.ProfessionalRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IBookingRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.BookingRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IRecurringBookingRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.RecurringBookingRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IAmcContractRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.AmcContractRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IPriceQuoteRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.PriceQuoteRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IPriceRuleRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.PriceRuleRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.ICouponRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.CouponRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IMembershipRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.MembershipRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IPaymentRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.PaymentRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IRefundRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.RefundRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.ICreditTransactionRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.CreditTransactionRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IEarningsRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.EarningsRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IPayoutRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.PayoutRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IReviewRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.ReviewRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.ISupportRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.SupportRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IDisputeRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.DisputeRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.INotificationRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.NotificationRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.ICommissionRuleRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.CommissionRuleRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IUserRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.UserRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.ICustomerRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.CustomerRepository>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IAnalyticsRepository, VSRSystemsBackend.Infrastructure.Repositories.HomeServices.AnalyticsRepository>();
+
+// HomeServices service registrations
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IServiceCatalogService, VSRSystemsBackend.Application.HomeServices.Services.ServiceCatalogService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.ILocationService, VSRSystemsBackend.Application.HomeServices.Services.LocationService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IProfessionalService, VSRSystemsBackend.Application.HomeServices.Services.ProfessionalService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IPriceQuoteService, VSRSystemsBackend.Application.HomeServices.Services.PriceQuoteService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IBookingService, VSRSystemsBackend.Application.HomeServices.Services.BookingService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IAssignmentService, VSRSystemsBackend.Application.HomeServices.Services.AssignmentService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IPaymentService, VSRSystemsBackend.Application.HomeServices.Services.PaymentService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IEarningsService, VSRSystemsBackend.Application.HomeServices.Services.EarningsService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IPayoutService, VSRSystemsBackend.Application.HomeServices.Services.PayoutService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IAnalyticsService, VSRSystemsBackend.Application.HomeServices.Services.AnalyticsService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IReviewService, VSRSystemsBackend.Application.HomeServices.Services.ReviewService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.ISupportService, VSRSystemsBackend.Application.HomeServices.Services.SupportService>();
+
 // CORS
 builder.Services.AddCors(options =>
 {

@@ -7,6 +7,7 @@ public interface IServiceCatalogService
 {
     Task<Result<IReadOnlyList<ServiceCategoryDto>>> GetCategoriesAsync(CancellationToken cancellationToken = default);
     Task<Result<ServiceCategoryDto>> GetCategoryBySlugAsync(string slug, CancellationToken cancellationToken = default);
+    Task<Result<ServiceCategoryDto>> CreateCategoryAsync(CreateServiceCategoryDto dto, CancellationToken cancellationToken = default);
     Task<Result<IReadOnlyList<ServiceDto>>> GetServicesAsync(string? categoryId, string? cityId, CancellationToken cancellationToken = default);
     Task<Result<ServiceDto>> GetServiceBySlugAsync(string slug, string? cityId, CancellationToken cancellationToken = default);
     Task<Result<IReadOnlyList<ServicePackageDto>>> GetPackagesAsync(string serviceId, CancellationToken cancellationToken = default);

@@ -115,6 +115,14 @@ public class ServiceCatalogRepository : IServiceCatalogRepository
             .FirstOrDefaultAsync(c => c.Slug == slug && !c.IsDeleted, cancellationToken);
     }
 
+    public async Task<ServiceCategory> AddCategoryAsync(ServiceCategory category, CancellationToken cancellationToken = default)
+    {
+        category.CreatedAt = DateTime.UtcNow;
+        await _context.ServiceCategories.AddAsync(category, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+        return category;
+    }
+
     public async Task<IReadOnlyList<Service>> GetActiveServicesAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Services

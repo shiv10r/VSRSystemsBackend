@@ -51,6 +51,16 @@ public class HomeServiceCategoriesController : ControllerBase
         return Ok(ApiResponse<ServiceCategoryDto>.Ok(result.Value!));
     }
 
+    [HttpPost("categories")]
+    public async Task<ActionResult<ApiResponse<ServiceCategoryDto>>> CreateCategory([FromBody] CreateServiceCategoryDto dto, CancellationToken cancellationToken = default)
+    {
+        var result = await _catalogService.CreateCategoryAsync(dto, cancellationToken);
+        if (result.IsFailure)
+            return BadRequest(ApiResponse<ServiceCategoryDto>.Fail(result.Error));
+
+        return CreatedAtAction(nameof(GetCategoryBySlug), new { slug = result.Value!.Slug }, ApiResponse<ServiceCategoryDto>.Ok(result.Value!));
+    }
+
     [HttpGet("services")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<ServiceDto>>>> GetServices(
         [FromQuery] string? categoryId = null,

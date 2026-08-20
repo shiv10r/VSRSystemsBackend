@@ -76,13 +76,21 @@ public class CreateServiceCategoryDto
     [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
 
+    [MaxLength(220)]
+    public string Slug { get; set; } = string.Empty;
+
     [MaxLength(500)]
-    public string Tagline { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 
     [MaxLength(1000)]
-    public string ImageUrl { get; set; } = string.Empty;
+    public string Icon { get; set; } = string.Empty;
+
+    [MaxLength(20)]
+    public string Color { get; set; } = string.Empty;
 
     public int SortOrder { get; set; }
+
+    public bool IsActive { get; set; } = true;
 }
 
 public class UpdateServiceCategoryDto

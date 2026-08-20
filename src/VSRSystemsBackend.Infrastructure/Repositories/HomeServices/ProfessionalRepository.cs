@@ -195,4 +195,35 @@ public class ProfessionalRepository : IProfessionalRepository
             .AnyAsync(a => a.ProfessionalId == professionalId && a.DayOfWeek == dayOfWeek
                 && a.StartTime <= slotStart.TimeOfDay && a.EndTime >= slotEnd.TimeOfDay && !a.IsDeleted, cancellationToken);
     }
+
+    public async Task<ProfessionalAvailability> AddAvailabilityAsync(ProfessionalAvailability availability, CancellationToken cancellationToken = default)
+    {
+        availability.CreatedAt = DateTime.UtcNow;
+        await _context.ProfessionalAvailabilities.AddAsync(availability, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+        return availability;
+    }
+
+    public async Task DeleteAvailabilityAsync(ProfessionalAvailability availability, CancellationToken cancellationToken = default)
+    {
+        availability.IsDeleted = true;
+        availability.UpdatedAt = DateTime.UtcNow;
+        _context.ProfessionalAvailabilities.Update(availability);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task UpdateDocumentAsync(ProfessionalDocument document, CancellationToken cancellationToken = default)
+    {
+        document.UpdatedAt = DateTime.UtcNow;
+        _context.ProfessionalDocuments.Update(document);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ProfessionalPerformance>> GetPerformanceAsync(string professionalId, CancellationToken cancellationToken = default)
+    {
+        return await _context.ProfessionalPerformances
+            .Where(p => p.ProfessionalId == professionalId && !p.IsDeleted)
+            .OrderByDescending(p => p.PeriodEnd)
+            .ToListAsync(cancellationToken);
+    }
 }

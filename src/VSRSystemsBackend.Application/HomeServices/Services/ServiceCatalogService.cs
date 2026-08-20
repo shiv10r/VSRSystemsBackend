@@ -37,6 +37,34 @@ public class ServiceCatalogService : IServiceCatalogService
         return Result<ServiceCategoryDto>.Success(ToCategoryDto(category));
     }
 
+    public async Task<Result<ServiceCategoryDto>> CreateCategoryAsync(CreateServiceCategoryDto dto, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Name))
+            return Result<ServiceCategoryDto>.Failure("Name is required");
+
+        var slug = string.IsNullOrWhiteSpace(dto.Slug)
+            ? dto.Name.ToLower().Trim().Replace(" ", "-")
+            : dto.Slug.Trim().ToLower();
+
+        var existing = await _catalogRepository.GetCategoryBySlugAsync(slug, cancellationToken);
+        if (existing != null)
+            return Result<ServiceCategoryDto>.Failure($"A category with slug '{slug}' already exists");
+
+        var category = new ServiceCategory
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Name = dto.Name.Trim(),
+            Slug = slug,
+            Tagline = dto.Description ?? string.Empty,
+            ImageUrl = dto.Icon ?? string.Empty,
+            SortOrder = dto.SortOrder,
+            IsActive = dto.IsActive
+        };
+
+        var created = await _catalogRepository.AddCategoryAsync(category, cancellationToken);
+        return Result<ServiceCategoryDto>.Success(ToCategoryDto(created));
+    }
+
     public async Task<Result<IReadOnlyList<ServiceDto>>> GetServicesAsync(string? categoryId, string? cityId, CancellationToken cancellationToken = default)
     {
         var services = await _catalogRepository.GetActiveServicesAsync(cancellationToken);

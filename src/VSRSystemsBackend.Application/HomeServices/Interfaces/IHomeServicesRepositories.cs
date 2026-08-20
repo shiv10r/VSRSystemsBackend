@@ -7,6 +7,7 @@ public interface IServiceCatalogRepository : IRepository<Service>
 {
     Task<IReadOnlyList<ServiceCategory>> GetActiveCategoriesAsync(CancellationToken cancellationToken = default);
     Task<ServiceCategory?> GetCategoryBySlugAsync(string slug, CancellationToken cancellationToken = default);
+    Task<ServiceCategory> AddCategoryAsync(ServiceCategory category, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Service>> GetActiveServicesAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Service>> GetServicesByCategoryAsync(string categoryId, CancellationToken cancellationToken = default);
     Task<Service?> GetServiceBySlugAsync(string slug, CancellationToken cancellationToken = default);
@@ -41,6 +42,10 @@ public interface IProfessionalRepository : IRepository<Professional>
     Task<ProfessionalPerformance?> GetCurrentPerformanceAsync(string professionalId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Professional>> GetByStatusAsync(string status, CancellationToken cancellationToken = default);
     Task<bool> IsAvailableAtAsync(string professionalId, DateTime slotStart, TimeSpan duration, CancellationToken cancellationToken = default);
+    Task<ProfessionalAvailability> AddAvailabilityAsync(ProfessionalAvailability availability, CancellationToken cancellationToken = default);
+    Task DeleteAvailabilityAsync(ProfessionalAvailability availability, CancellationToken cancellationToken = default);
+    Task UpdateDocumentAsync(ProfessionalDocument document, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ProfessionalPerformance>> GetPerformanceAsync(string professionalId, CancellationToken cancellationToken = default);
 }
 
 public interface IBookingRepository : IRepository<Booking>
