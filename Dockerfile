@@ -10,6 +10,8 @@ COPY src/VSRSystemsBackend.Core/VSRSystemsBackend.Core.csproj src/VSRSystemsBack
 COPY src/VSRSystemsBackend.Domain/VSRSystemsBackend.Domain.csproj src/VSRSystemsBackend.Domain/
 COPY src/VSRSystemsBackend.Infrastructure/VSRSystemsBackend.Infrastructure.csproj src/VSRSystemsBackend.Infrastructure/
 COPY src/VSRSystemsBackend.Shared/VSRSystemsBackend.Shared.csproj src/VSRSystemsBackend.Shared/
+COPY tests/VSRSystemsBackend.UnitTests/VSRSystemsBackend.UnitTests.csproj tests/VSRSystemsBackend.UnitTests/
+COPY tests/VSRSystemsBackend.IntegrationTests/VSRSystemsBackend.IntegrationTests.csproj tests/VSRSystemsBackend.IntegrationTests/
 
 # Restore
 RUN dotnet restore VSRSystemsBackend.sln
