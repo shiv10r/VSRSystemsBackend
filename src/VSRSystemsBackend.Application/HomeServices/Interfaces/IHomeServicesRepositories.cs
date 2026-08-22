@@ -191,6 +191,9 @@ public interface ICustomerRepository : IRepository<Customer>
     Task<Customer?> GetWithAddressesAsync(string id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<CustomerAddress>> GetAddressesAsync(string customerId, CancellationToken cancellationToken = default);
     Task<CustomerAddress?> GetAddressAsync(string customerId, string addressId, CancellationToken cancellationToken = default);
+    Task AddAddressAsync(CustomerAddress address, CancellationToken cancellationToken = default);
+    Task UpdateAddressAsync(CustomerAddress address, CancellationToken cancellationToken = default);
+    Task RemoveAddressAsync(CustomerAddress address, CancellationToken cancellationToken = default);
 }
 
 public interface IAnalyticsRepository

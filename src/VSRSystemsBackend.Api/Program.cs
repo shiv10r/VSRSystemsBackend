@@ -143,6 +143,7 @@ builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces
 builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IAnalyticsService, VSRSystemsBackend.Application.HomeServices.Services.AnalyticsService>();
 builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.IReviewService, VSRSystemsBackend.Application.HomeServices.Services.ReviewService>();
 builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.ISupportService, VSRSystemsBackend.Application.HomeServices.Services.SupportService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.ICustomerAddressesService, VSRSystemsBackend.Application.HomeServices.Services.CustomerAddressesService>();
 
 // CORS
 builder.Services.AddCors(options =>

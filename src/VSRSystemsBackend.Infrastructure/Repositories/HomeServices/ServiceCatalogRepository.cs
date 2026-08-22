@@ -1051,6 +1051,28 @@ public class CustomerRepository : ICustomerRepository
         return await _context.HomeServiceCustomerAddresses
             .FirstOrDefaultAsync(a => a.CustomerId == customerId && a.Id == addressId && !a.IsDeleted, cancellationToken);
     }
+
+    public async Task AddAddressAsync(CustomerAddress address, CancellationToken cancellationToken = default)
+    {
+        address.CreatedAt = DateTime.UtcNow;
+        await _context.HomeServiceCustomerAddresses.AddAsync(address, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task UpdateAddressAsync(CustomerAddress address, CancellationToken cancellationToken = default)
+    {
+        address.UpdatedAt = DateTime.UtcNow;
+        _context.HomeServiceCustomerAddresses.Update(address);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task RemoveAddressAsync(CustomerAddress address, CancellationToken cancellationToken = default)
+    {
+        address.IsDeleted = true;
+        address.UpdatedAt = DateTime.UtcNow;
+        _context.HomeServiceCustomerAddresses.Update(address);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }
 
 public class AnalyticsRepository : IAnalyticsRepository

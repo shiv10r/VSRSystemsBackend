@@ -149,9 +149,19 @@ public interface ISupportService
     Task<Result> MarkNotificationReadAsync(string notificationId, CancellationToken cancellationToken = default);
 }
 
+public interface ICustomerAddressesService
+{
+    Task<Result<IReadOnlyList<CustomerAddressDto>>> GetAddressesAsync(string customerId, CancellationToken cancellationToken = default);
+    Task<Result<CustomerAddressDto>> GetAddressAsync(string customerId, string addressId, CancellationToken cancellationToken = default);
+    Task<Result<CustomerAddressDto>> CreateAddressAsync(string customerId, CreateCustomerAddressDto dto, CancellationToken cancellationToken = default);
+    Task<Result<CustomerAddressDto>> UpdateAddressAsync(string customerId, string addressId, UpdateCustomerAddressDto dto, CancellationToken cancellationToken = default);
+    Task<Result> DeleteAddressAsync(string customerId, string addressId, CancellationToken cancellationToken = default);
+    Task<Result> SetDefaultAddressAsync(string customerId, SetDefaultAddressDto dto, CancellationToken cancellationToken = default);
+}
+
 public interface IHomeServicesService : IServiceCatalogService, ILocationService, IProfessionalService,
     IPriceQuoteService, IBookingService, IAssignmentService, IPaymentService, IEarningsService,
-    IPayoutService, IAnalyticsService, IReviewService, ISupportService
+    IPayoutService, IAnalyticsService, IReviewService, ISupportService, ICustomerAddressesService
 {
 }
 
