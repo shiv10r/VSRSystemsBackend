@@ -151,6 +151,7 @@ public interface ISupportService
 
 public interface ICustomerAddressesService
 {
+    Task<Result<CustomerDto>> EnsureCustomerAsync(EnsureCustomerDto dto, CancellationToken cancellationToken = default);
     Task<Result<IReadOnlyList<CustomerAddressDto>>> GetAddressesAsync(string customerId, CancellationToken cancellationToken = default);
     Task<Result<CustomerAddressDto>> GetAddressAsync(string customerId, string addressId, CancellationToken cancellationToken = default);
     Task<Result<CustomerAddressDto>> CreateAddressAsync(string customerId, CreateCustomerAddressDto dto, CancellationToken cancellationToken = default);

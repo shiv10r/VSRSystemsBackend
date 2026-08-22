@@ -19,6 +19,16 @@ public class HomeServiceCustomerAddressesController : ControllerBase
         _service = service;
     }
 
+    [HttpPost("~/api/home-services/customers/ensure")]
+    public async Task<ActionResult<ApiResponse<CustomerDto>>> EnsureCustomer([FromBody] EnsureCustomerDto dto, CancellationToken cancellationToken = default)
+    {
+        var result = await _service.EnsureCustomerAsync(dto, cancellationToken);
+        if (result.IsFailure)
+            return BadRequest(ApiResponse<CustomerDto>.Fail(result.Error));
+
+        return Ok(ApiResponse<CustomerDto>.Ok(result.Value!));
+    }
+
     [HttpGet]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<CustomerAddressDto>>>> GetAddresses(string customerId, CancellationToken cancellationToken = default)
     {

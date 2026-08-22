@@ -124,3 +124,17 @@ public class SetDefaultAddressDto
     [MaxLength(50)]
     public string AddressId { get; set; } = string.Empty;
 }
+
+public class EnsureCustomerDto
+{
+    [Required]
+    [EmailAddress]
+    [MaxLength(200)]
+    public string Email { get; set; } = string.Empty;
+
+    [MaxLength(200)]
+    public string? FullName { get; set; }
+
+    [MaxLength(20)]
+    public string? Phone { get; set; }
+}

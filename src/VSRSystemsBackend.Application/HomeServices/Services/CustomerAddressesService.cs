@@ -9,13 +9,72 @@ public class CustomerAddressesService : ICustomerAddressesService
 {
     private readonly ICustomerRepository _customerRepository;
     private readonly ILocationRepository _locationRepository;
+    private readonly IUserRepository _userRepository;
 
     public CustomerAddressesService(
         ICustomerRepository customerRepository,
-        ILocationRepository locationRepository)
+        ILocationRepository locationRepository,
+        IUserRepository userRepository)
     {
         _customerRepository = customerRepository;
         _locationRepository = locationRepository;
+        _userRepository = userRepository;
+    }
+
+    public async Task<Result<CustomerDto>> EnsureCustomerAsync(EnsureCustomerDto dto, CancellationToken cancellationToken = default)
+    {
+        var email = dto.Email.Trim().ToLowerInvariant();
+
+        var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
+        if (user == null)
+        {
+            user = new User
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Email = email,
+                FullName = string.IsNullOrWhiteSpace(dto.FullName) ? email : dto.FullName!.Trim(),
+                Phone = dto.Phone ?? string.Empty,
+                Status = "active",
+                CreatedAt = DateTime.UtcNow,
+            };
+            await _userRepository.AddAsync(user, cancellationToken);
+
+            var role = await _userRepository.GetRoleByNameAsync("customer", cancellationToken);
+            if (role != null)
+                await _userRepository.AssignRoleAsync(user.Id, role.Id, cancellationToken);
+        }
+
+        var customer = await _customerRepository.GetByUserIdAsync(user.Id, cancellationToken);
+        if (customer == null)
+        {
+            customer = new Customer
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                UserId = user.Id,
+                DisplayName = user.FullName,
+                Email = user.Email,
+                Phone = user.Phone,
+                CreatedAt = DateTime.UtcNow,
+            };
+            await _customerRepository.AddAsync(customer, cancellationToken);
+        }
+
+        var addresses = await _customerRepository.GetAddressesAsync(customer.Id, cancellationToken);
+
+        return Result<CustomerDto>.Success(new CustomerDto
+        {
+            Id = customer.Id,
+            UserId = customer.UserId,
+            DisplayName = customer.DisplayName,
+            DefaultAddressId = customer.DefaultAddressId,
+            WalletBalance = customer.WalletBalance,
+            MembershipPlanId = customer.MembershipPlanId,
+            ReferralCode = customer.ReferralCode,
+            ReferredByCustomerId = customer.ReferredByCustomerId,
+            Phone = customer.Phone,
+            Email = customer.Email,
+            Addresses = addresses.Select(a => MapToDto(a)).ToList(),
+        });
     }
 
     public async Task<Result<IReadOnlyList<CustomerAddressDto>>> GetAddressesAsync(string customerId, CancellationToken cancellationToken = default)
