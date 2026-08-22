@@ -1,5 +1,7 @@
 using Serilog;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using FluentValidation.AspNetCore;
 using VSRSystemsBackend.Infrastructure.Persistence;
 using VSRSystemsBackend.Infrastructure.Data.Seeds;
@@ -156,6 +158,21 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie()
+.AddGoogle(options =>
+{
+    options.ClientId = builder.Configuration["Google:ClientId"] ?? "";
+    options.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? "";
+    options.CallbackPath = "/signin-google";
+    options.SaveTokens = true;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -169,6 +186,8 @@ app.UseSwaggerUI(c =>
 
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseSerilogRequestLogging();
 app.UseAuthorization();
 app.MapControllers();
