@@ -154,3 +154,10 @@ public interface IHomeServicesService : IServiceCatalogService, ILocationService
     IPayoutService, IAnalyticsService, IReviewService, ISupportService
 {
 }
+
+public interface IAuthService
+{
+    Task<Result<AuthResponseDto>> RegisterAsync(RegisterRequestDto dto, CancellationToken cancellationToken = default);
+    Task<Result<AuthResponseDto>> LoginAsync(LoginRequestDto dto, CancellationToken cancellationToken = default);
+    Task<Result<UserDto>> GetMeAsync(string userId, CancellationToken cancellationToken = default);
+}

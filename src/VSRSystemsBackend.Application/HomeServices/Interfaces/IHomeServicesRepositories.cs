@@ -181,6 +181,8 @@ public interface IUserRepository : IRepository<User>
 {
     Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Role>> GetRolesAsync(string userId, CancellationToken cancellationToken = default);
+    Task<Role?> GetRoleByNameAsync(string roleName, CancellationToken cancellationToken = default);
+    Task AssignRoleAsync(string userId, string roleId, CancellationToken cancellationToken = default);
 }
 
 public interface ICustomerRepository : IRepository<Customer>

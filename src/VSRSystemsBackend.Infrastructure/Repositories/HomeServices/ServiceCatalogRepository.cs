@@ -904,6 +904,30 @@ public class UserRepository : IUserRepository
             .OrderBy(r => r.Name)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<Role?> GetRoleByNameAsync(string roleName, CancellationToken cancellationToken = default)
+    {
+        return await _context.HomeServiceRoles
+            .FirstOrDefaultAsync(r => r.Name == roleName && !r.IsDeleted, cancellationToken);
+    }
+
+    public async Task AssignRoleAsync(string userId, string roleId, CancellationToken cancellationToken = default)
+    {
+        var exists = await _context.HomeServiceUserRoles
+            .AnyAsync(ur => ur.UserId == userId && ur.RoleId == roleId && !ur.IsDeleted, cancellationToken);
+        if (exists)
+            return;
+
+        var userRole = new UserRole
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            UserId = userId,
+            RoleId = roleId,
+            CreatedAt = DateTime.UtcNow
+        };
+        await _context.HomeServiceUserRoles.AddAsync(userRole, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }
 
 public class CustomerRepository : ICustomerRepository
