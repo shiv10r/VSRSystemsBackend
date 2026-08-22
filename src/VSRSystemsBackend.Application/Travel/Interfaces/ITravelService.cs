@@ -54,6 +54,38 @@ public interface IGroupTripService
     Task<Result> DeleteAsync(string id, CancellationToken cancellationToken = default);
 }
 
+public interface IDepartureService
+{
+    Task<Result<TravelDepartureDto>> CreateAsync(CreateTravelDepartureDto dto, CancellationToken cancellationToken = default);
+    Task<Result<TravelDepartureDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<Result<PagedResult<TravelDepartureDto>>> GetAllAsync(PagedRequest request, CancellationToken cancellationToken = default);
+    Task<Result<PagedResult<TravelDepartureDto>>> GetActiveAsync(string? packageId = null, CancellationToken cancellationToken = default);
+}
+
+public interface IPaymentService
+{
+    Task<Result<TravelPaymentOrderDto>> CreatePaymentOrderAsync(string sessionId, CreateTravelPaymentOrderDto dto, CancellationToken cancellationToken = default);
+    Task<Result> VerifyPaymentAsync(TravelPaymentVerificationDto dto, CancellationToken cancellationToken = default);
+    Task<Result<TravelPaymentDto>> GetByBookingIdAsync(string bookingId, CancellationToken cancellationToken = default);
+    Task<Result<TravelRefundDto>> CreateRefundAsync(CreateTravelRefundDto dto, CancellationToken cancellationToken = default);
+}
+
+public interface ILeadService
+{
+    Task<Result<LeadDto>> CreateAsync(CreateLeadDto dto, CancellationToken cancellationToken = default);
+    Task<Result<LeadDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<Result<PagedResult<LeadDto>>> GetAllAsync(PagedRequest request, CancellationToken cancellationToken = default);
+    Task<Result<PagedResult<LeadDto>>> GetActiveAsync(PagedRequest request, CancellationToken cancellationToken = default);
+    Task<Result<LeadDto>> UpdateStatusAsync(string id, string status, CancellationToken cancellationToken = default);
+}
+
+public interface IBookingSessionService
+{
+    Task<Result<TravelBookingSessionDto>> CreateAsync(CreateTravelBookingSessionDto dto, CancellationToken cancellationToken = default);
+    Task<Result<TravelBookingSessionDto>> GetByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<Result<PagedResult<TravelBookingSessionDto>>> GetByPackageIdAsync(string packageId, PagedRequest request, CancellationToken cancellationToken = default);
+}
+
 public interface IWishlistService
 {
     Task<Result<TravelWishlistDto>> GetByCustomerIdAsync(string customerId, CancellationToken cancellationToken = default);

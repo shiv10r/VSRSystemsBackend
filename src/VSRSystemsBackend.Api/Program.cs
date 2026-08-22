@@ -145,6 +145,16 @@ builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces
 builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.ISupportService, VSRSystemsBackend.Application.HomeServices.Services.SupportService>();
 builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces.ICustomerAddressesService, VSRSystemsBackend.Application.HomeServices.Services.CustomerAddressesService>();
 
+// Travel repository registrations (generic repository covers travel entities)
+builder.Services.AddScoped(typeof(VSRSystemsBackend.Core.Interfaces.IRepository<>), typeof(VSRSystemsBackend.Infrastructure.Repositories.Repository<>));
+
+// Travel service registrations
+builder.Services.AddScoped<VSRSystemsBackend.Application.Travel.Interfaces.ITravelDestinationService, VSRSystemsBackend.Application.Travel.Services.TravelDestinationService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Travel.Interfaces.ITravelPackageService, VSRSystemsBackend.Application.Travel.Services.TravelPackageService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Travel.Interfaces.ITravelDepartureService, VSRSystemsBackend.Application.Travel.Services.TravelDepartureService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Travel.Interfaces.ITravelBookingService, VSRSystemsBackend.Application.Travel.Services.TravelBookingService>();
+builder.Services.AddScoped<VSRSystemsBackend.Application.Travel.Interfaces.ITravelPaymentService, VSRSystemsBackend.Application.Travel.Services.TravelPaymentService>();
+
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -201,6 +211,15 @@ using (var scope = app.Services.CreateScope())
     if (app.Environment.IsDevelopment())
     {
         await HomeServicesSeeder.SeedAsync(context);
+    }
+
+    try
+    {
+        await TravelSeeder.SeedAsync(context);
+    }
+    catch (Exception ex)
+    {
+        Log.Warning(ex, "Travel seeding skipped: {Message}", ex.Message);
     }
 }
 

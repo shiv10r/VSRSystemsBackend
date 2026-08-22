@@ -208,6 +208,10 @@ public class AppDbContext : DbContext
     public DbSet<GroupTrip> GroupTrips => Set<GroupTrip>();
     public DbSet<TravelWishlist> TravelWishlists => Set<TravelWishlist>();
     public DbSet<TravelWishlistItem> TravelWishlistItems => Set<TravelWishlistItem>();
+    public DbSet<TravelDeparture> TravelDepartures => Set<TravelDeparture>();
+    public DbSet<TravelBookingSession> TravelBookingSessions => Set<TravelBookingSession>();
+    public DbSet<TravelPayment> TravelPayments => Set<TravelPayment>();
+    public DbSet<Lead> Leads => Set<Lead>();
 
     // HomeServices Domain
     public DbSet<ServiceCategory> ServiceCategories => Set<ServiceCategory>();
