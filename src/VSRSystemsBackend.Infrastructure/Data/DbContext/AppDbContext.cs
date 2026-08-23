@@ -11,6 +11,7 @@ using VSRSystemsBackend.Domain.Medical;
 using VSRSystemsBackend.Domain.News;
 using VSRSystemsBackend.Domain.Travel;
 using VSRSystemsBackend.Domain.HomeServices;
+using VSRSystemsBackend.Domain.Platform;
 using VSRSystemsBackend.Infrastructure.Data.Configurations;
 // Aliases for HomeServices entities whose names collide with other domains
 using HsBooking = VSRSystemsBackend.Domain.HomeServices.Booking;
@@ -280,12 +281,19 @@ public class AppDbContext : DbContext
     public DbSet<Faq> Faqs => Set<Faq>();
     public DbSet<HsAuditLog> HomeServiceAuditLogs => Set<HsAuditLog>();
 
+    // Shared persistence transport for frontend module collections.
+    public DbSet<ModuleDataDocument> ModuleDataDocuments => Set<ModuleDataDocument>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         // Apply all configurations
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        modelBuilder.Entity<ModuleDataDocument>()
+            .HasIndex(document => new { document.Module, document.Collection })
+            .IsUnique();
 
         // Global query filters for soft delete
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())

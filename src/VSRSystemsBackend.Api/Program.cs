@@ -1,5 +1,6 @@
 using Serilog;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using FluentValidation.AspNetCore;
@@ -12,8 +13,6 @@ var builder = WebApplication.CreateBuilder(args);
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
 builder.Host.UseSerilog();
@@ -26,14 +25,21 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "VSR Systems Backend API", Version = "v1" });
+    c.CustomSchemaIds(type => type.FullName?.Replace('+', '.') ?? type.Name);
 });
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Distributed cache: Redis with in-memory fallback so the app works with or without Redis
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IDistributedCache, VSRSystemsBackend.Api.Infrastructure.Caching.ResilientDistributedCache>();
+
 // AutoMapper
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddAutoMapper(config =>
+    config.CreateMap<VSRSystemsBackend.Domain.Jobs.JobSource, VSRSystemsBackend.Application.Jobs.DTOs.JobSourceDto>(),
+    AppDomain.CurrentDomain.GetAssemblies());
 
 // MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
@@ -86,7 +92,7 @@ builder.Services.AddHttpClient<VSRSystemsBackend.Application.Jobs.Interfaces.IJo
     client.Timeout = TimeSpan.FromSeconds(60);
     client.DefaultRequestHeaders.Add("Accept", "application/json, application/xml, text/html, */*");
 });
-builder.Services.AddHostedService<VSRSystemsBackend.Api.Services.JobsScraperScheduler>();
+builder.Services.AddHostedService<VSRSystemsBackend.Api.Modules.Jobs.Services.JobsScraperScheduler>();
 
 // Jobs service registrations
 builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IJobService, VSRSystemsBackend.Application.Jobs.Services.JobService>();
@@ -147,6 +153,7 @@ builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces
 
 // Travel repository registrations (generic repository covers travel entities)
 builder.Services.AddScoped(typeof(VSRSystemsBackend.Core.Interfaces.IRepository<>), typeof(VSRSystemsBackend.Infrastructure.Repositories.Repository<>));
+builder.Services.AddScoped<VSRSystemsBackend.Application.Platform.ModuleData.IModuleDataService, VSRSystemsBackend.Infrastructure.Platform.ModuleData.ModuleDataService>();
 
 // Travel service registrations
 builder.Services.AddScoped<VSRSystemsBackend.Application.Travel.Interfaces.ITravelDestinationService, VSRSystemsBackend.Application.Travel.Services.TravelDestinationService>();
@@ -195,7 +202,7 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -208,14 +215,55 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await context.Database.EnsureCreatedAsync();
-    if (app.Environment.IsDevelopment())
+    await context.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "ModuleDataDocuments" (
+            "Id" uuid NOT NULL,
+            "Module" character varying(50) NOT NULL,
+            "Collection" character varying(150) NOT NULL,
+            "Json" text NOT NULL,
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NULL,
+            "IsDeleted" boolean NOT NULL DEFAULT FALSE,
+            CONSTRAINT "PK_ModuleDataDocuments" PRIMARY KEY ("Id")
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ModuleDataDocuments_Module_Collection"
+            ON "ModuleDataDocuments" ("Module", "Collection");
+        CREATE TABLE IF NOT EXISTS "TravelDepartures" (
+            "Id" character varying(50) CONSTRAINT "PK_TravelDepartures" PRIMARY KEY,
+            "Code" character varying(50) NOT NULL,
+            "Title" character varying(200) NOT NULL,
+            "DepartureCity" character varying(100) NOT NULL,
+            "PackageId" character varying(50) NOT NULL,
+            "DepartureDate" timestamp with time zone NOT NULL,
+            "AvailableSeats" integer NOT NULL,
+            "TotalSeats" integer NOT NULL,
+            "Price" numeric NOT NULL,
+            "DiscountedPrice" numeric NULL,
+            "ImageUrl" character varying(3000) NULL,
+            "Status" text NOT NULL,
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NULL,
+            "IsDeleted" boolean NOT NULL DEFAULT FALSE,
+            "CreatedBy" text NOT NULL,
+            "UpdatedBy" text NULL
+        );
+        """);
+    var seedMode = builder.Configuration["SeedData:Mode"] ?? "None";
+    if (seedMode.Equals("Full", StringComparison.OrdinalIgnoreCase))
     {
         await HomeServicesSeeder.SeedAsync(context);
+    }
+    else if (seedMode.Equals("Sample", StringComparison.OrdinalIgnoreCase))
+    {
+        await HomeServicesSeeder.SeedSampleAsync(context);
     }
 
     try
     {
-        await TravelSeeder.SeedAsync(context);
+        if (!seedMode.Equals("None", StringComparison.OrdinalIgnoreCase))
+        {
+            await TravelSeeder.SeedAsync(context);
+        }
     }
     catch (Exception ex)
     {

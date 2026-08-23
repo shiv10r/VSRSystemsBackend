@@ -1,7 +1,7 @@
 using VSRSystemsBackend.Application.Jobs.Interfaces;
 using VSRSystemsBackend.Domain.Jobs;
 
-namespace VSRSystemsBackend.Api.Services;
+namespace VSRSystemsBackend.Api.Modules.Jobs.Services;
 
 /// <summary>
 /// Runs due job sources every 30 seconds. Seeds fixture sources once at startup,

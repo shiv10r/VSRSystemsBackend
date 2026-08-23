@@ -126,6 +126,7 @@ public class ServiceCatalogRepository : IServiceCatalogRepository
     public async Task<IReadOnlyList<Service>> GetActiveServicesAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Services
+            .Include(s => s.Packages)
             .Where(s => s.IsActive && !s.IsDeleted)
             .OrderBy(s => s.Name)
             .ToListAsync(cancellationToken);

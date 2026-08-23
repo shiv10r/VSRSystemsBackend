@@ -35,13 +35,6 @@ public class LoginRequestDto
 
     [Required]
     public string Password { get; set; } = string.Empty;
-
-    [Phone]
-    [MaxLength(20)]
-    public string? Phone { get; set; }
-
-    [MaxLength(200)]
-    public string? FullName { get; set; }
 }
 
 public class UserDto

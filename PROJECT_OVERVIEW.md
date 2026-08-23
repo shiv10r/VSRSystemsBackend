@@ -2,9 +2,9 @@
 
 ## Executive Summary
 
-VSR Systems is a **multi-service enterprise platform** built as a modular, scalable monolith with clean architecture. It serves **7 distinct business domains** through a unified dashboard, shared infrastructure, and role-based access control.
+VSR Systems is a multi-service enterprise platform built as a module-isolated modular monolith with clean architecture. It serves 11 business domains through one frontend, one API, and shared platform capabilities.
 
-**Tech Stack**: .NET 8 / ASP.NET Core / EF Core / PostgreSQL (Supabase) | React 18 / Vite / TypeScript / Tailwind CSS
+**Tech Stack**: .NET 8 / ASP.NET Core / EF Core / PostgreSQL | React 19 / Vite / TypeScript / Tailwind CSS
 
 ---
 
@@ -36,13 +36,13 @@ VSR Systems is a **multi-service enterprise platform** built as a modular, scala
         ▼                     ▼                     ▼
 ┌───────────────┐     ┌───────────────┐     ┌───────────────┐
 │  PostgreSQL   │     │    Redis      │     │  External     │
-│  (Supabase)   │     │   (Cache)     │     │  Services     │
+│ Local/Supabase│     │   (Cache)     │     │  Services     │
 └───────────────┘     └───────────────┘     └───────────────┘
 ```
 
 ---
 
-## 🎯 7 Business Modules (Domains)
+## 🎯 11 Business Modules (Domains)
 
 ### 1. **Home Services Marketplace** — *Primary Revenue Driver*
 - **Customer-facing marketplace** for home services (plumbing, AC, cleaning, electrical, etc.)
