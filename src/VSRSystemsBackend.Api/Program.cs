@@ -1,5 +1,6 @@
 using Serilog;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using FluentValidation.AspNetCore;
@@ -31,6 +32,10 @@ builder.Services.AddSwaggerGen(c =>
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Distributed cache: Redis with in-memory fallback so the app works with or without Redis
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<IDistributedCache, VSRSystemsBackend.Api.Infrastructure.Caching.ResilientDistributedCache>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());

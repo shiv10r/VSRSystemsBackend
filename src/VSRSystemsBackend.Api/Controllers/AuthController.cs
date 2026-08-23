@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 using VSRSystemsBackend.Application.HomeServices.DTOs;
 
 namespace VSRSystemsBackend.Api.Controllers;
@@ -9,27 +11,18 @@ namespace VSRSystemsBackend.Api.Controllers;
 [AllowAnonymous]
 public class AuthController : ControllerBase
 {
-    // In-memory store for demo (replace with real DB logic later)
-    private static readonly Dictionary<string, AuthResponseDto> _tokens = new()
+    private readonly IDistributedCache _cache;
+    private const string TokenKeyPrefix = "auth:token:";
+
+    public AuthController(IDistributedCache cache)
     {
-        // Seeded admin credentials from old system
-        ["admin"] = new AuthResponseDto
-        {
-            Token = "admin-token-demo",
-            ExpiresAtUtc = DateTime.UtcNow.AddDays(7),
-            User = new UserDto
-            {
-                Id = "admin-demo",
-                Email = "admin.portal@vsrsystems.com",
-                FullName = "Admin",
-                Phone = "",
-                Roles = new List<string> { "admin" }
-            }
-        }
-    };
+        _cache = cache;
+    }
+
+    private static string TokenKey(string token) => $"{TokenKeyPrefix}{token}";
 
     [HttpPost("register")]
-    public IActionResult Register([FromBody] RegisterRequestDto dto)
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDto dto)
     {
         var token = Guid.NewGuid().ToString("N");
         var user = new AuthResponseDto
@@ -45,12 +38,12 @@ public class AuthController : ControllerBase
                 Roles = new List<string> { "customer" }
             }
         };
-        _tokens[token] = user;
+        await StoreTokenAsync(token, user);
         return Ok(new { token, username = dto.FullName, role = "customer" });
     }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequestDto dto)
+    public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
     {
         // Simple demo authentication - accept admin credentials or any email/password
         string fullName;
@@ -78,22 +71,41 @@ public class AuthController : ControllerBase
                 Roles = new List<string> { "admin" }
             }
         };
-        _tokens[token] = user;
+        await StoreTokenAsync(token, user);
         return Ok(new { token, username = fullName, role = "admin" });
     }
 
     [HttpGet("me")]
     [Authorize]
-    public IActionResult Me()
+    public async Task<IActionResult> Me()
     {
         var authHeader = Request.Headers.Authorization.ToString();
         if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
             return Unauthorized();
 
         var token = authHeader.Substring("Bearer ".Length);
-        if (_tokens.TryGetValue(token, out var user))
-            return Ok(user);
+        var user = await GetTokenAsync(token);
+        if (user is null)
+            return Unauthorized();
 
-        return Unauthorized();
+        return Ok(user);
+    }
+
+    private async Task StoreTokenAsync(string token, AuthResponseDto user)
+    {
+        var options = new DistributedCacheEntryOptions
+        {
+            AbsoluteExpiration = user.ExpiresAtUtc
+        };
+        await _cache.SetStringAsync(TokenKey(token), JsonSerializer.Serialize(user), options);
+    }
+
+    private async Task<AuthResponseDto?> GetTokenAsync(string token)
+    {
+        var json = await _cache.GetStringAsync(TokenKey(token));
+        if (string.IsNullOrEmpty(json))
+            return null;
+
+        return JsonSerializer.Deserialize<AuthResponseDto>(json);
     }
 }
