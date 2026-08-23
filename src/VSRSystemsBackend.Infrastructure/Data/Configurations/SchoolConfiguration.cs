@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using VSRSystemsBackend.Domain.School;
 
@@ -100,7 +101,11 @@ public class ParentRecordConfiguration : IEntityTypeConfiguration<ParentRecord>
         builder.Property(p => p.ChildIds)
             .HasConversion(
                 v => string.Join(',', v),
-                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
+                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
+            .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                (left, right) => left != null && right != null && left.SequenceEqual(right),
+                value => value.Aggregate(0, (hash, item) => HashCode.Combine(hash, item.GetHashCode())),
+                value => value.ToList()));
 
         builder.HasIndex(p => p.Phone).IsUnique().HasFilter("\"IsDeleted\" = false");
     }

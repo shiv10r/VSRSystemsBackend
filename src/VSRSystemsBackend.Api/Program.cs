@@ -13,8 +13,6 @@ var builder = WebApplication.CreateBuilder(args);
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
 builder.Host.UseSerilog();
@@ -27,6 +25,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "VSR Systems Backend API", Version = "v1" });
+    c.CustomSchemaIds(type => type.FullName?.Replace('+', '.') ?? type.Name);
 });
 
 // Database
@@ -38,7 +37,9 @@ builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IDistributedCache, VSRSystemsBackend.Api.Infrastructure.Caching.ResilientDistributedCache>();
 
 // AutoMapper
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddAutoMapper(config =>
+    config.CreateMap<VSRSystemsBackend.Domain.Jobs.JobSource, VSRSystemsBackend.Application.Jobs.DTOs.JobSourceDto>(),
+    AppDomain.CurrentDomain.GetAssemblies());
 
 // MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
@@ -201,7 +202,7 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -227,6 +228,25 @@ using (var scope = app.Services.CreateScope())
         );
         CREATE UNIQUE INDEX IF NOT EXISTS "IX_ModuleDataDocuments_Module_Collection"
             ON "ModuleDataDocuments" ("Module", "Collection");
+        CREATE TABLE IF NOT EXISTS "TravelDepartures" (
+            "Id" character varying(50) CONSTRAINT "PK_TravelDepartures" PRIMARY KEY,
+            "Code" character varying(50) NOT NULL,
+            "Title" character varying(200) NOT NULL,
+            "DepartureCity" character varying(100) NOT NULL,
+            "PackageId" character varying(50) NOT NULL,
+            "DepartureDate" timestamp with time zone NOT NULL,
+            "AvailableSeats" integer NOT NULL,
+            "TotalSeats" integer NOT NULL,
+            "Price" numeric NOT NULL,
+            "DiscountedPrice" numeric NULL,
+            "ImageUrl" character varying(3000) NULL,
+            "Status" text NOT NULL,
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NULL,
+            "IsDeleted" boolean NOT NULL DEFAULT FALSE,
+            "CreatedBy" text NOT NULL,
+            "UpdatedBy" text NULL
+        );
         """);
     if (app.Environment.IsDevelopment())
     {
