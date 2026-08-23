@@ -21,6 +21,7 @@ public sealed class ModuleDataControllerTests
     [InlineData(typeof(HomeServicesDataController), "api/home-services")]
     [InlineData(typeof(JobsDataController), "api/jobs")]
     [InlineData(typeof(TravelDataController), "api/travel")]
+    [InlineData(typeof(PlatformDataController), "api/platform")]
     public void EveryModuleHasADataRoute(Type controllerType, string expectedRoute)
     {
         var route = controllerType.GetCustomAttribute<RouteAttribute>();

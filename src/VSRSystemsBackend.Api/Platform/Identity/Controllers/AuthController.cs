@@ -54,7 +54,7 @@ public class AuthController : ControllerBase
         else
         {
             // For demo: accept any email/password
-            fullName = dto.FullName ?? dto.Email;
+            fullName = dto.Email;
         }
 
         var token = Guid.NewGuid().ToString("N");
@@ -67,7 +67,7 @@ public class AuthController : ControllerBase
                 Id = "admin-demo",
                 Email = dto.Email,
                 FullName = fullName,
-                Phone = dto.Phone,
+                Phone = string.Empty,
                 Roles = new List<string> { "admin" }
             }
         };

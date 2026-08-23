@@ -11,7 +11,7 @@ public abstract class ModuleDataControllerBase(IModuleDataService service, strin
     public async Task<IActionResult> Get(string collection, CancellationToken cancellationToken)
     {
         var json = await service.GetAsync(module, collection, cancellationToken);
-        return json is null ? NotFound() : Content(json, "application/json");
+        return Content(json ?? "null", "application/json");
     }
 
     [HttpPut("data/{collection}")]
@@ -55,3 +55,6 @@ public sealed class JobsDataController(IModuleDataService service) : ModuleDataC
 
 [Route("api/travel")]
 public sealed class TravelDataController(IModuleDataService service) : ModuleDataControllerBase(service, "travel");
+
+[Route("api/platform")]
+public sealed class PlatformDataController(IModuleDataService service) : ModuleDataControllerBase(service, "platform");

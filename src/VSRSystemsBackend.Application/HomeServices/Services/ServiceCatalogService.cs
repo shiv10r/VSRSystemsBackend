@@ -276,7 +276,8 @@ public class ServiceCatalogService : IServiceCatalogService
         NeedsInspection = s.NeedsInspection,
         InspectionFee = s.InspectionFee,
         IsActive = s.IsActive,
-        StartingPrice = s.Packages?.Where(p => p.IsActive).Select(p => p.BasePrice).DefaultIfEmpty(0).Min() ?? 0
+        StartingPrice = s.Packages?.Where(p => p.IsActive).Select(p => p.BasePrice).DefaultIfEmpty(0).Min() ?? 0,
+        Packages = s.Packages?.Where(p => p.IsActive).OrderBy(p => p.BasePrice).Select(ToPackageDto).ToList() ?? new()
     };
 
     private static ServicePackageDto ToPackageDto(ServicePackage p) => new()
