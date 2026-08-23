@@ -91,7 +91,7 @@ builder.Services.AddHttpClient<VSRSystemsBackend.Application.Jobs.Interfaces.IJo
     client.Timeout = TimeSpan.FromSeconds(60);
     client.DefaultRequestHeaders.Add("Accept", "application/json, application/xml, text/html, */*");
 });
-builder.Services.AddHostedService<VSRSystemsBackend.Api.Services.JobsScraperScheduler>();
+builder.Services.AddHostedService<VSRSystemsBackend.Api.Modules.Jobs.Services.JobsScraperScheduler>();
 
 // Jobs service registrations
 builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IJobService, VSRSystemsBackend.Application.Jobs.Services.JobService>();
