@@ -152,6 +152,7 @@ builder.Services.AddScoped<VSRSystemsBackend.Application.HomeServices.Interfaces
 
 // Travel repository registrations (generic repository covers travel entities)
 builder.Services.AddScoped(typeof(VSRSystemsBackend.Core.Interfaces.IRepository<>), typeof(VSRSystemsBackend.Infrastructure.Repositories.Repository<>));
+builder.Services.AddScoped<VSRSystemsBackend.Application.Platform.ModuleData.IModuleDataService, VSRSystemsBackend.Infrastructure.Platform.ModuleData.ModuleDataService>();
 
 // Travel service registrations
 builder.Services.AddScoped<VSRSystemsBackend.Application.Travel.Interfaces.ITravelDestinationService, VSRSystemsBackend.Application.Travel.Services.TravelDestinationService>();
@@ -213,6 +214,20 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await context.Database.EnsureCreatedAsync();
+    await context.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS "ModuleDataDocuments" (
+            "Id" uuid NOT NULL,
+            "Module" character varying(50) NOT NULL,
+            "Collection" character varying(150) NOT NULL,
+            "Json" text NOT NULL,
+            "CreatedAt" timestamp with time zone NOT NULL,
+            "UpdatedAt" timestamp with time zone NULL,
+            "IsDeleted" boolean NOT NULL DEFAULT FALSE,
+            CONSTRAINT "PK_ModuleDataDocuments" PRIMARY KEY ("Id")
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS "IX_ModuleDataDocuments_Module_Collection"
+            ON "ModuleDataDocuments" ("Module", "Collection");
+        """);
     if (app.Environment.IsDevelopment())
     {
         await HomeServicesSeeder.SeedAsync(context);
