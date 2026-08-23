@@ -12,6 +12,29 @@ namespace VSRSystemsBackend.Infrastructure.Data.Seeds;
 /// </summary>
 public static class HomeServicesSeeder
 {
+    public static async Task SeedSampleAsync(AppDbContext context, CancellationToken ct = default)
+    {
+        if (await context.ServiceCategories.AnyAsync(ct)) return;
+
+        var data = HomeServicesSeedData.Build();
+        var category = data.Categories.First();
+        var services = data.Services.Where(x => x.CategoryId == category.Id).Take(3).ToList();
+        var serviceIds = services.Select(x => x.Id).ToHashSet();
+        var packages = data.Packages.Where(x => serviceIds.Contains(x.ServiceId)).ToList();
+        var packageIds = packages.Select(x => x.Id).ToHashSet();
+        var addOns = data.AddOns.Where(x => serviceIds.Contains(x.ServiceId)).ToList();
+        var addOnIds = addOns.Select(x => x.Id).ToHashSet();
+
+        context.ServiceCategories.Add(category);
+        context.Services.AddRange(services);
+        context.ServiceProblems.AddRange(data.Problems.Where(x => serviceIds.Contains(x.ServiceId)));
+        context.ServicePackages.AddRange(packages);
+        context.ServiceAddOns.AddRange(addOns);
+        context.ServicePackageAddOns.AddRange(data.PackageAddOns.Where(x => packageIds.Contains(x.PackageId) && addOnIds.Contains(x.AddOnId)));
+        context.ServiceWarranties.AddRange(data.Warranties.Where(x => serviceIds.Contains(x.ServiceId)));
+        await context.SaveChangesAsync(ct);
+    }
+
     public static async Task SeedAsync(AppDbContext context, CancellationToken ct = default)
     {
         if (await context.ServiceCategories.AnyAsync(ct))

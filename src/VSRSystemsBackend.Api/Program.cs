@@ -248,14 +248,22 @@ using (var scope = app.Services.CreateScope())
             "UpdatedBy" text NULL
         );
         """);
-    if (app.Environment.IsDevelopment())
+    var seedMode = builder.Configuration["SeedData:Mode"] ?? "None";
+    if (seedMode.Equals("Full", StringComparison.OrdinalIgnoreCase))
     {
         await HomeServicesSeeder.SeedAsync(context);
+    }
+    else if (seedMode.Equals("Sample", StringComparison.OrdinalIgnoreCase))
+    {
+        await HomeServicesSeeder.SeedSampleAsync(context);
     }
 
     try
     {
-        await TravelSeeder.SeedAsync(context);
+        if (!seedMode.Equals("None", StringComparison.OrdinalIgnoreCase))
+        {
+            await TravelSeeder.SeedAsync(context);
+        }
     }
     catch (Exception ex)
     {

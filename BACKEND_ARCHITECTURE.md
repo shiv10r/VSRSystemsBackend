@@ -1,46 +1,41 @@
 # VSR Systems Backend Architecture
 
-## Technology Stack
-- **Framework**: .NET (ASP.NET Core)
-- **Database**: PostgreSQL
-- **Architecture Pattern**: MVC (Model-View-Controller)
+## Runtime
 
-## Layered Architecture
+- .NET 8 ASP.NET Core API
+- EF Core with PostgreSQL
+- Redis with in-memory fallback
+- Swagger/OpenAPI
+- One module-isolated modular monolith
 
+## Dependency Direction
+
+```text
+Api -> Application -> Domain
+Infrastructure -> Application + Domain
 ```
-Controller → Interface (IBusinessLayer) → BusinessLayer → Interface (IRepo) → Repo → PostgreSQL
+
+`Core` and `Shared` contain cross-cutting primitives only. Business modules must not access another module's repository directly.
+
+## Structure
+
+```text
+src/
+  VSRSystemsBackend.Api/
+    Modules/
+    Platform/
+  VSRSystemsBackend.Application/
+  VSRSystemsBackend.Domain/
+  VSRSystemsBackend.Infrastructure/
+  VSRSystemsBackend.Core/
+  VSRSystemsBackend.Shared/
 ```
 
-### Components
+## Data Environments
 
-| Layer | Responsibility | Key Interfaces |
-|-------|---------------|----------------|
-| **Controller** | HTTP endpoints, request/response handling | - |
-| **Business Layer** | Business logic, validation, orchestration | `IBusinessLayer` |
-| **Repository Layer** | Data access, CRUD operations | `IRepo` |
+- Development: local PostgreSQL `vsr_systems_dev` on port `5433`; sample seed mode.
+- Production: Supabase PostgreSQL; automatic seed mode disabled.
+- Shared document persistence: `/api/{module}/data/{collection}`.
+- Production secrets move to Azure Key Vault in Phase 3.
 
-### Interface Contracts
-
-- **`IBusinessLayer`** - Defines business operations exposed to controllers
-- **`IRepo`** - Defines data access operations (CRUD, queries)
-
-### Flow
-1. Controller receives HTTP request
-2. Controller calls `IBusinessLayer` implementation
-3. Business layer applies logic, calls `IRepo` implementation
-4. Repository executes PostgreSQL queries
-5. Response flows back up the chain
-
-## Project Structure (Expected)
-```
-VSRSystemsBackend/
-├── Controllers/
-├── BusinessLayer/
-│   ├── Interfaces/ (IBusinessLayer)
-│   └── Implementations/
-├── Repository/
-│   ├── Interfaces/ (IRepo)
-│   └── Implementations/
-├── Models/
-└── Data/ (DbContext, Migrations)
-```
+The local cluster files live under ignored `.local/postgres-data` and must never be committed.
