@@ -442,7 +442,7 @@ public static class HomeServicesSeedData
         // Users: 6 platform users + customers + professionals
         var users = new List<User>
         {
-            new() { Id = "user-admin", Email = "admin@vsrsystems.com", Phone = "9999999901", PasswordHash = "DEMO", FullName = "Platform Admin", Status = "active" },
+            new() { Id = "user-admin", Email = "admin.portal@vsrsystems.com", Phone = "9999999901", PasswordHash = "DEMO", FullName = "Platform Admin", Status = "active" },
             new() { Id = "user-ops", Email = "ops@vsrsystems.com", Phone = "9999999902", PasswordHash = "DEMO", FullName = "Ops Agent", Status = "active" },
             new() { Id = "user-support", Email = "support@vsrsystems.com", Phone = "9999999903", PasswordHash = "DEMO", FullName = "Support Agent", Status = "active" },
             new() { Id = "user-finance", Email = "finance@vsrsystems.com", Phone = "9999999904", PasswordHash = "DEMO", FullName = "Finance Agent", Status = "active" },

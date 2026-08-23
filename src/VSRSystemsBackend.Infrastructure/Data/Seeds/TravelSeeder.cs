@@ -45,10 +45,10 @@ public static class TravelSeeder
 
         var departures = new List<TravelDeparture>
         {
-            new() { Id = "dep-1", Code = "dep-1", Title = "Vietnam Festive Escape", PackageId = "pkg-vietnam", DepartureCity = "Delhi", DepartureDate = new DateTime(2026, 12, 28), AvailableSeats = 12, TotalSeats = 30, Price = 49999, ImageUrl = Vietnam, Status = "active" },
-            new() { Id = "dep-2", Code = "dep-2", Title = "Dubai New Year Group", PackageId = "pkg-dubai", DepartureCity = "Mumbai", DepartureDate = new DateTime(2026, 12, 29), AvailableSeats = 8, TotalSeats = 24, Price = 46999, ImageUrl = Dubai, Status = "active" },
-            new() { Id = "dep-3", Code = "dep-3", Title = "Manali Snow Weekend", PackageId = "pkg-manali", DepartureCity = "Delhi", DepartureDate = new DateTime(2027, 1, 16), AvailableSeats = 16, TotalSeats = 32, Price = 18999, ImageUrl = Manali, Status = "active" },
-            new() { Id = "dep-4", Code = "dep-4", Title = "Bali Young Travellers", PackageId = "pkg-bali", DepartureCity = "Bengaluru", DepartureDate = new DateTime(2027, 2, 7), AvailableSeats = 10, TotalSeats = 20, Price = 41999, ImageUrl = Bali, Status = "active" },
+            new() { Id = "dep-1", Code = "dep-1", Title = "Vietnam Festive Escape", PackageId = "pkg-vietnam", DepartureCity = "Delhi", DepartureDate = new DateTime(2026, 12, 28, 0, 0, 0, DateTimeKind.Utc), AvailableSeats = 12, TotalSeats = 30, Price = 49999, ImageUrl = Vietnam, Status = "active" },
+            new() { Id = "dep-2", Code = "dep-2", Title = "Dubai New Year Group", PackageId = "pkg-dubai", DepartureCity = "Mumbai", DepartureDate = new DateTime(2026, 12, 29, 0, 0, 0, DateTimeKind.Utc), AvailableSeats = 8, TotalSeats = 24, Price = 46999, ImageUrl = Dubai, Status = "active" },
+            new() { Id = "dep-3", Code = "dep-3", Title = "Manali Snow Weekend", PackageId = "pkg-manali", DepartureCity = "Delhi", DepartureDate = new DateTime(2027, 1, 16, 0, 0, 0, DateTimeKind.Utc), AvailableSeats = 16, TotalSeats = 32, Price = 18999, ImageUrl = Manali, Status = "active" },
+            new() { Id = "dep-4", Code = "dep-4", Title = "Bali Young Travellers", PackageId = "pkg-bali", DepartureCity = "Bengaluru", DepartureDate = new DateTime(2027, 2, 7, 0, 0, 0, DateTimeKind.Utc), AvailableSeats = 10, TotalSeats = 20, Price = 41999, ImageUrl = Bali, Status = "active" },
         };
 
         await context.Destinations.AddRangeAsync(destinations, ct);

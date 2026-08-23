@@ -20,7 +20,7 @@ public class AuthController : ControllerBase
             User = new UserDto
             {
                 Id = "admin-demo",
-                Email = "admin@vsrsystems.com",
+                Email = "admin.portal@vsrsystems.com",
                 FullName = "Admin",
                 Phone = "",
                 Roles = new List<string> { "admin" }
@@ -54,7 +54,7 @@ public class AuthController : ControllerBase
     {
         // Simple demo authentication - accept admin credentials or any email/password
         string fullName;
-        if (dto.Email == "admin@vsrsystems.com" && dto.Password == "admin123")
+        if (dto.Email == "admin.portal@vsrsystems.com" && dto.Password == "nfeuTYjb7CEAnoK7EV")
         {
             fullName = "Admin";
         }

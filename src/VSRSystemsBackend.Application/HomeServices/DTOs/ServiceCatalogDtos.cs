@@ -339,3 +339,105 @@ public class SearchCatalogResultDto
     public int Page { get; set; }
     public int PageSize { get; set; }
 }
+
+// ──────────────────────────────────────────────────────────────────────
+// Flight
+// ──────────────────────────────────────────────────────────────────────
+public class FlightSearchRequestDto
+{
+    public string Origin { get; set; } = string.Empty;
+    public string Destination { get; set; } = string.Empty;
+    public string DepartureDate { get; set; } = string.Empty;
+    public string? ReturnDate { get; set; }
+    public string TripType { get; set; } = "OneWay";
+    public int Adults { get; set; } = 1;
+    public int Children { get; set; } = 0;
+    public int Infants { get; set; } = 0;
+    public string? CabinClass { get; set; }
+    public bool? DirectOnly { get; set; }
+}
+
+public class FlightSearchResultDto
+{
+    public string SearchId { get; set; } = string.Empty;
+    public string Supplier { get; set; } = string.Empty;
+    public List<FlightSegmentDto> Segments { get; set; } = new();
+    public string Airline { get; set; } = string.Empty;
+    public string FlightNumber { get; set; } = string.Empty;
+    public DateTime Departure { get; set; }
+    public DateTime Arrival { get; set; }
+    public TimeSpan Duration { get; set; }
+    public int Stops { get; set; }
+    public string Cabin { get; set; } = string.Empty;
+    public string Baggage { get; set; } = string.Empty;
+    public string Refundability { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
+    public decimal BaseFare { get; set; }
+    public decimal Taxes { get; set; }
+    public decimal Fees { get; set; }
+    public decimal Total { get; set; }
+    public bool Refundable { get; set; }
+    public bool Changeable { get; set; }
+    public string FareRulesSummary { get; set; } = string.Empty;
+    public DateTime ExpiresAt { get; set; }
+}
+
+public class FlightSegmentDto
+{
+    public string DepartureAirport { get; set; } = string.Empty;
+    public string ArrivalAirport { get; set; } = string.Empty;
+    public DateTime DepartureTime { get; set; }
+    public DateTime ArrivalTime { get; set; }
+    public string Airline { get; set; } = string.Empty;
+    public string FlightNumber { get; set; } = string.Empty;
+    public int DurationMinutes { get; set; }
+    public int Stops { get; set; }
+}
+
+public class FlightRevalidateRequestDto
+{
+    public string SearchId { get; set; } = string.Empty;
+    public string ResultId { get; set; } = string.Empty;
+}
+
+public class CreateBookingSessionDto
+{
+    public string ProductType { get; set; } = "Flight";
+    public string SearchReference { get; set; } = string.Empty;
+    public List<BookingTravelerDto> Travelers { get; set; } = new();
+    public string? SupplierReference { get; set; }
+}
+
+public class BookingTravelerDto
+{
+    public string FullName { get; set; } = string.Empty;
+    public string? DocumentNumber { get; set; } // passport etc
+    public string DocumentType { get; set; } = string.Empty;
+    public string ContactPhone { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+}
+
+public class CreateFinalQuoteDto
+{
+    public string BookingSessionId { get; set; } = string.Empty;
+    public decimal BaseAmount { get; set; }
+    public decimal TaxAmount { get; set; }
+    public decimal SupplierFee { get; set; }
+    public decimal PlatformFee { get; set; }
+    public decimal ConvenienceFee { get; set; }
+    public decimal DiscountAmount { get; set; }
+    public decimal CouponDiscount { get; set; }
+    public decimal WalletAmount { get; set; }
+    public decimal FinalAmount { get; set; }
+    public string Currency { get; set; } = string.Empty;
+    public string PricingVersion { get; set; } = string.Empty;
+}
+
+public class RefundPreviewDto
+{
+    public string BookingId { get; set; } = string.Empty;
+    public decimal RequestedAmount { get; set; }
+    public decimal SupplierDeduction { get; set; }
+    public decimal PlatformDeduction { get; set; }
+    public decimal RefundAmount { get; set; }
+}
