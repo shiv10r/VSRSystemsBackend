@@ -23,6 +23,8 @@ public sealed partial class SupabaseStorageService
         CancellationToken cancellationToken = default)
     {
         Validate(request);
+        if (!request.BillingConfirmed)
+            throw new StorageValidationException("Cloud-cost confirmation is required before upload.");
         var serviceUri = GetServiceUri();
 
         var encodedPath = string.Join('/', request.Path.Split('/').Select(Uri.EscapeDataString));
@@ -85,6 +87,21 @@ public sealed partial class SupabaseStorageService
             cancellationToken);
 
         return new DeleteObjectResponse(request.Bucket, request.Path, true);
+    }
+
+    public async Task VerifyObjectExistsAsync(
+        StorageObjectRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateObject(request.Bucket, request.Path);
+        _ = GetServiceUri();
+        var encodedPath = string.Join('/', request.Path.Split('/').Select(Uri.EscapeDataString));
+        var endpoint = $"{_options.Url.TrimEnd('/')}/storage/v1/object/{Uri.EscapeDataString(request.Bucket)}/{encodedPath}";
+        using var providerRequest = CreateProviderRequest(HttpMethod.Head, endpoint, new ByteArrayContent([]));
+        using var response = await SendAsync(
+            providerRequest,
+            "Supabase Storage could not verify the uploaded object.",
+            cancellationToken);
     }
 
     public void Validate(SignedUploadRequest request)

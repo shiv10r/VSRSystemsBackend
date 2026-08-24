@@ -1,6 +1,10 @@
 namespace VSRSystemsBackend.Api.Platform.Storage;
 
-public sealed record SignedUploadRequest(string Bucket, string Path, string ContentType);
+public sealed record SignedUploadRequest(
+    string Bucket,
+    string Path,
+    string ContentType,
+    bool BillingConfirmed = false);
 
 public sealed record SignedUploadResponse(
     string Bucket,
@@ -18,6 +22,15 @@ public sealed record SignedDownloadResponse(
     int ExpiresInSeconds);
 
 public sealed record DeleteObjectResponse(string Bucket, string Path, bool Deleted);
+
+public sealed record UploadCompletedRequest(
+    string Bucket,
+    string Path,
+    string FileName,
+    string ContentType,
+    long SizeBytes);
+
+public sealed record UploadCompletedResponse(bool NotificationSent, string Message);
 
 public sealed class StorageValidationException(string message) : Exception(message);
 

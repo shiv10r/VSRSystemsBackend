@@ -25,7 +25,7 @@ public sealed class SupabaseStorageServiceTests
         var service = CreateService(handler, serviceKey: serviceKey);
 
         var result = await service.CreateSignedUploadAsync(
-            new SignedUploadRequest("uploads", "projects/project-1/photo.jpg", "image/jpeg"));
+            new SignedUploadRequest("uploads", "projects/project-1/photo.jpg", "image/jpeg", true));
 
         Assert.Equal(serviceKey, authorization);
         Assert.Equal(serviceKey, apiKey);
@@ -146,6 +146,38 @@ public sealed class SupabaseStorageServiceTests
     }
 
     [Fact]
+    public async Task RejectsUploadWithoutCloudCostConfirmation()
+    {
+        var handler = new PlatformTestHttpHandler((_, _) => throw new InvalidOperationException());
+        var service = CreateService(handler);
+
+        var exception = await Assert.ThrowsAsync<StorageValidationException>(() => service.CreateSignedUploadAsync(
+            new SignedUploadRequest("uploads", "project/file.pdf", "application/pdf")));
+
+        Assert.Contains("confirmation", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, handler.CallCount);
+    }
+
+    [Fact]
+    public async Task VerifiesUploadedObjectWithAuthenticatedHeadRequest()
+    {
+        HttpMethod? method = null;
+        Uri? requestUri = null;
+        var handler = new PlatformTestHttpHandler((request, _) =>
+        {
+            method = request.Method;
+            requestUri = request.RequestUri;
+            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK));
+        });
+        var service = CreateService(handler);
+
+        await service.VerifyObjectExistsAsync(new StorageObjectRequest("uploads", "project/file.pdf"));
+
+        Assert.Equal(HttpMethod.Head, method);
+        Assert.Equal("https://test.supabase.co/storage/v1/object/uploads/project/file.pdf", requestUri?.AbsoluteUri);
+    }
+
+    [Fact]
     public async Task DownloadAndDeleteValidateBucketAndPathBeforeProviderCall()
     {
         var handler = new PlatformTestHttpHandler((_, _) => throw new InvalidOperationException());
@@ -170,7 +202,7 @@ public sealed class SupabaseStorageServiceTests
         var service = CreateService(handler, url: string.Empty, serviceKey: string.Empty);
 
         await Assert.ThrowsAsync<StorageNotConfiguredException>(() => service.CreateSignedUploadAsync(
-            new SignedUploadRequest("uploads", "project/file.pdf", "application/pdf")));
+            new SignedUploadRequest("uploads", "project/file.pdf", "application/pdf", true)));
 
         Assert.Equal(0, handler.CallCount);
     }

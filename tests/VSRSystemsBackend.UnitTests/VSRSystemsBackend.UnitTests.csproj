@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\VSRSystemsBackend.Api\VSRSystemsBackend.Api.csproj" />
     <ProjectReference Include="..\..\src\VSRSystemsBackend.Application\VSRSystemsBackend.Application.csproj" />
     <ProjectReference Include="..\..\src\VSRSystemsBackend.Domain\VSRSystemsBackend.Domain.csproj" />
   </ItemGroup>

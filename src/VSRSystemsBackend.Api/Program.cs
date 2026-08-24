@@ -4,12 +4,19 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using FluentValidation.AspNetCore;
+using MongoDB.Driver;
 using VSRSystemsBackend.Infrastructure.Persistence;
+using VSRSystemsBackend.Infrastructure.Persistence.Mongo;
 using VSRSystemsBackend.Infrastructure.Data.Seeds;
 using VSRSystemsBackend.Api.Infrastructure.Authentication;
+using VSRSystemsBackend.Api.Platform.Chat;
+using VSRSystemsBackend.Api.Platform.Health;
 using VSRSystemsBackend.Api.Platform.Maps;
 using VSRSystemsBackend.Api.Platform.AI;
+using VSRSystemsBackend.Api.Platform.Realtime;
 using VSRSystemsBackend.Api.Platform.Storage;
 using VSRSystemsBackend.Api.Platform.Weather;
 
@@ -37,6 +44,44 @@ builder.Services.AddSwaggerGen(c =>
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// MongoDB is optional and isolated from PostgreSQL-backed modules.
+var mongoSection = builder.Configuration.GetSection(MongoDbOptions.SectionName);
+builder.Services.Configure<MongoDbOptions>(mongoSection);
+var mongoOptions = mongoSection.Get<MongoDbOptions>() ?? new MongoDbOptions();
+IMongoClient? mongoClient = null;
+IMongoDatabase? mongoDatabase = null;
+string? mongoConfigurationError = null;
+
+if (mongoOptions.IsConfigured)
+{
+    try
+    {
+        mongoClient = new MongoClient(mongoOptions.ConnectionString);
+        mongoDatabase = mongoClient.GetDatabase(mongoOptions.DatabaseName);
+        builder.Services.AddSingleton(mongoClient);
+        builder.Services.AddSingleton(mongoDatabase);
+    }
+    catch (Exception)
+    {
+        mongoConfigurationError = "MongoDB configuration is invalid; document-backed features are disabled.";
+        Log.Warning("MongoDB configuration is invalid; document-backed features are disabled");
+    }
+}
+
+builder.Services.AddSingleton(new MongoDbContext(
+    mongoOptions,
+    mongoClient,
+    mongoDatabase,
+    mongoConfigurationError));
+builder.Services.AddHealthChecks()
+    .AddCheck<MongoDbHealthCheck>(
+        "mongodb",
+        failureStatus: HealthStatus.Degraded,
+        tags: new[] { "mongodb", "documents" },
+        timeout: TimeSpan.FromSeconds(5));
+builder.Services.AddRealtime();
+builder.Services.AddChat();
 
 // Distributed cache: Redis with in-memory fallback so the app works with or without Redis
 builder.Services.AddMemoryCache();
@@ -67,6 +112,19 @@ builder.Services.AddHttpClient<AiGatewayService>(client =>
 builder.Services.Configure<SupabaseStorageOptions>(builder.Configuration.GetSection(SupabaseStorageOptions.SectionName));
 builder.Services.AddHttpClient<SupabaseStorageService>(client =>
     client.Timeout = TimeSpan.FromSeconds(15));
+builder.Services.Configure<UploadNotificationOptions>(builder.Configuration.GetSection(UploadNotificationOptions.SectionName));
+builder.Services.PostConfigure<UploadNotificationOptions>(options =>
+{
+    if (string.IsNullOrWhiteSpace(options.ResendApiKey))
+        options.ResendApiKey = builder.Configuration["RESEND_API_KEY"] ?? string.Empty;
+    if (string.IsNullOrWhiteSpace(options.RecipientEmail))
+        options.RecipientEmail = builder.Configuration["UPLOAD_NOTIFICATION_EMAIL"] ?? string.Empty;
+});
+builder.Services.AddHttpClient<UploadNotificationService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.resend.com/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 
 // AutoMapper
 builder.Services.AddAutoMapper(config =>
@@ -242,8 +300,26 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseSerilogRequestLogging();
 app.MapControllers();
+app.MapRealtime();
 app.MapGet("/", () => Results.Ok(new { service = "VSR Systems Backend API", status = "healthy" }));
-app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            status = report.Status.ToString().ToLowerInvariant(),
+            checks = report.Entries.ToDictionary(
+                entry => entry.Key,
+                entry => new
+                {
+                    status = entry.Value.Status.ToString().ToLowerInvariant(),
+                    description = entry.Value.Description
+                })
+        });
+    }
+});
 
 // Ensure database is created (skip seeder in production to save memory)
 using (var scope = app.Services.CreateScope())
