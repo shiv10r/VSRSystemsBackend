@@ -92,7 +92,8 @@ builder.Services.AddHttpClient<VSRSystemsBackend.Application.Jobs.Interfaces.IJo
     client.Timeout = TimeSpan.FromSeconds(60);
     client.DefaultRequestHeaders.Add("Accept", "application/json, application/xml, text/html, */*");
 });
-builder.Services.AddHostedService<VSRSystemsBackend.Api.Modules.Jobs.Services.JobsScraperScheduler>();
+if (builder.Configuration.GetValue<bool>("JobsScraper:SchedulerEnabled"))
+    builder.Services.AddHostedService<VSRSystemsBackend.Api.Modules.Jobs.Services.JobsScraperScheduler>();
 
 // Jobs service registrations
 builder.Services.AddScoped<VSRSystemsBackend.Application.Jobs.Interfaces.IJobService, VSRSystemsBackend.Application.Jobs.Services.JobService>();
@@ -202,13 +203,13 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseSerilogRequestLogging();
-app.UseAuthorization();
 app.MapControllers();
+app.MapGet("/", () => Results.Ok(new { service = "VSR Systems Backend API", status = "healthy" }));
+app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 
 // Ensure database is created (skip seeder in production to save memory)
 using (var scope = app.Services.CreateScope())
