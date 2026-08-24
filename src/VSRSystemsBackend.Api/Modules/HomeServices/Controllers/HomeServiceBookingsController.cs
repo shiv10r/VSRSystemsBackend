@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using VSRSystemsBackend.Application.HomeServices.DTOs;
 using VSRSystemsBackend.Application.HomeServices.Interfaces;
+using VSRSystemsBackend.Application.Platform.Realtime;
 using VSRSystemsBackend.Shared.DTOs;
 
 namespace VSRSystemsBackend.Api.Controllers;
@@ -15,15 +16,21 @@ public class HomeServiceBookingsController : ControllerBase
     private readonly IBookingService _bookingService;
     private readonly IPriceQuoteService _priceQuoteService;
     private readonly IAssignmentService _assignmentService;
+    private readonly IRealtimePublisher _realtimePublisher;
+    private readonly ILogger<HomeServiceBookingsController> _logger;
 
     public HomeServiceBookingsController(
         IBookingService bookingService,
         IPriceQuoteService priceQuoteService,
-        IAssignmentService assignmentService)
+        IAssignmentService assignmentService,
+        IRealtimePublisher realtimePublisher,
+        ILogger<HomeServiceBookingsController> logger)
     {
         _bookingService = bookingService;
         _priceQuoteService = priceQuoteService;
         _assignmentService = assignmentService;
+        _realtimePublisher = realtimePublisher;
+        _logger = logger;
     }
 
     [HttpPost("price-quotes")]
@@ -83,6 +90,7 @@ public class HomeServiceBookingsController : ControllerBase
         if (result.IsFailure)
             return BadRequest(ApiResponse<BookingDto>.Fail(result.Error));
 
+        await PublishBookingStatusChangedAsync(result.Value!);
         return Ok(ApiResponse<BookingDto>.Ok(result.Value!));
     }
 
@@ -93,6 +101,7 @@ public class HomeServiceBookingsController : ControllerBase
         if (result.IsFailure)
             return BadRequest(ApiResponse<BookingAssignmentDto>.Fail(result.Error));
 
+        await PublishBookingStatusChangedAsync(id, "assigned", professionalId, null);
         return Ok(ApiResponse<BookingAssignmentDto>.Ok(result.Value!));
     }
 
@@ -103,6 +112,7 @@ public class HomeServiceBookingsController : ControllerBase
         if (result.IsFailure)
             return BadRequest(ApiResponse<BookingDto>.Fail(result.Error));
 
+        await PublishBookingStatusChangedAsync(result.Value!);
         return Ok(ApiResponse<BookingDto>.Ok(result.Value!));
     }
 
@@ -113,6 +123,7 @@ public class HomeServiceBookingsController : ControllerBase
         if (result.IsFailure)
             return BadRequest(ApiResponse<BookingDto>.Fail(result.Error));
 
+        await PublishBookingStatusChangedAsync(result.Value!);
         return Ok(ApiResponse<BookingDto>.Ok(result.Value!));
     }
 
@@ -123,6 +134,7 @@ public class HomeServiceBookingsController : ControllerBase
         if (result.IsFailure)
             return BadRequest(ApiResponse<BookingDto>.Fail(result.Error));
 
+        await PublishBookingStatusChangedAsync(result.Value!);
         return Ok(ApiResponse<BookingDto>.Ok(result.Value!));
     }
 
@@ -133,6 +145,47 @@ public class HomeServiceBookingsController : ControllerBase
         if (result.IsFailure)
             return BadRequest(ApiResponse<BookingDto>.Fail(result.Error));
 
+        await PublishBookingStatusChangedAsync(result.Value!);
         return Ok(ApiResponse<BookingDto>.Ok(result.Value!));
+    }
+
+    private Task PublishBookingStatusChangedAsync(BookingDto booking) =>
+        PublishBookingStatusChangedAsync(
+            booking.Id,
+            booking.Status,
+            booking.AssignedProfessionalId,
+            booking.ScheduledStart);
+
+    private async Task PublishBookingStatusChangedAsync(
+        string bookingId,
+        string status,
+        string? assignedProfessionalId,
+        DateTime? scheduledStart)
+    {
+        var message = new RealtimeEventEnvelope<BookingStatusChangedPayload>(
+            Guid.NewGuid(),
+            RealtimeEventTypes.HomeServicesBookingStatusChanged,
+            1,
+            DateTimeOffset.UtcNow,
+            HttpContext.TraceIdentifier,
+            null,
+            new BookingStatusChangedPayload(bookingId, status, assignedProfessionalId, scheduledStart));
+
+        try
+        {
+            // The PostgreSQL operation has already committed; realtime delivery is best effort.
+            await _realtimePublisher.SendToGroupAsync(
+                RealtimeGroups.HomeServicesBooking(bookingId),
+                message,
+                CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(
+                exception,
+                "Booking {BookingId} changed to {Status}, but realtime publication failed",
+                bookingId,
+                status);
+        }
     }
 }

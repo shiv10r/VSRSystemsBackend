@@ -26,12 +26,16 @@ public sealed class CacheTokenAuthenticationHandler : AuthenticationHandler<Auth
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var authorization = Request.Headers.Authorization.ToString();
-        if (!authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-            return AuthenticateResult.NoResult();
+        var token = authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+            ? authorization["Bearer ".Length..].Trim()
+            : string.Empty;
 
-        var token = authorization["Bearer ".Length..].Trim();
+        // Browsers cannot set an Authorization header for WebSocket and SSE handshakes.
+        if (string.IsNullOrEmpty(token) && Request.Path.StartsWithSegments("/hubs"))
+            token = Request.Query["access_token"].FirstOrDefault() ?? string.Empty;
+
         if (string.IsNullOrEmpty(token))
-            return AuthenticateResult.Fail("A bearer token is required.");
+            return AuthenticateResult.NoResult();
 
         var sessionJson = await _cache.GetStringAsync(TokenKeyPrefix + token, Context.RequestAborted);
         if (string.IsNullOrEmpty(sessionJson))
@@ -43,6 +47,12 @@ public sealed class CacheTokenAuthenticationHandler : AuthenticationHandler<Auth
             var user = session.RootElement.GetProperty("User");
             var name = GetString(user, "FullName") ?? GetString(user, "Email") ?? "user";
             var claims = new List<Claim> { new(ClaimTypes.Name, name) };
+            var userId = GetString(user, "Id");
+            if (!string.IsNullOrEmpty(userId))
+            {
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, userId));
+                claims.Add(new Claim(VSRSystemsBackend.Shared.Constants.AppConstants.ClaimTypes.UserId, userId));
+            }
 
             var email = GetString(user, "Email");
             if (!string.IsNullOrEmpty(email))
