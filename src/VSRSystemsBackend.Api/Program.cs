@@ -9,6 +9,9 @@ using VSRSystemsBackend.Infrastructure.Persistence;
 using VSRSystemsBackend.Infrastructure.Data.Seeds;
 using VSRSystemsBackend.Api.Infrastructure.Authentication;
 using VSRSystemsBackend.Api.Platform.Maps;
+using VSRSystemsBackend.Api.Platform.AI;
+using VSRSystemsBackend.Api.Platform.Storage;
+using VSRSystemsBackend.Api.Platform.Weather;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,6 +50,23 @@ builder.Services.AddHttpClient<GeoapifyService>((serviceProvider, client) =>
     client.BaseAddress = new Uri(options.BaseUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
 });
+
+// Platform integrations are server-side so provider credentials never reach the browser.
+builder.Services.Configure<WeatherOptions>(builder.Configuration.GetSection(WeatherOptions.SectionName));
+builder.Services.AddHttpClient<OpenMeteoWeatherService>((serviceProvider, client) =>
+{
+    var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<WeatherOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+
+builder.Services.Configure<AiGatewayOptions>(builder.Configuration.GetSection(AiGatewayOptions.SectionName));
+builder.Services.AddHttpClient<AiGatewayService>(client =>
+    client.Timeout = Timeout.InfiniteTimeSpan);
+
+builder.Services.Configure<SupabaseStorageOptions>(builder.Configuration.GetSection(SupabaseStorageOptions.SectionName));
+builder.Services.AddHttpClient<SupabaseStorageService>(client =>
+    client.Timeout = TimeSpan.FromSeconds(15));
 
 // AutoMapper
 builder.Services.AddAutoMapper(config =>
