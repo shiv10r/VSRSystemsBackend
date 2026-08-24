@@ -112,6 +112,19 @@ builder.Services.AddHttpClient<AiGatewayService>(client =>
 builder.Services.Configure<SupabaseStorageOptions>(builder.Configuration.GetSection(SupabaseStorageOptions.SectionName));
 builder.Services.AddHttpClient<SupabaseStorageService>(client =>
     client.Timeout = TimeSpan.FromSeconds(15));
+builder.Services.Configure<UploadNotificationOptions>(builder.Configuration.GetSection(UploadNotificationOptions.SectionName));
+builder.Services.PostConfigure<UploadNotificationOptions>(options =>
+{
+    if (string.IsNullOrWhiteSpace(options.ResendApiKey))
+        options.ResendApiKey = builder.Configuration["RESEND_API_KEY"] ?? string.Empty;
+    if (string.IsNullOrWhiteSpace(options.RecipientEmail))
+        options.RecipientEmail = builder.Configuration["UPLOAD_NOTIFICATION_EMAIL"] ?? string.Empty;
+});
+builder.Services.AddHttpClient<UploadNotificationService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.resend.com/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 
 // AutoMapper
 builder.Services.AddAutoMapper(config =>
