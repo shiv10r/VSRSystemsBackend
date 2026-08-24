@@ -8,22 +8,24 @@ using Microsoft.Extensions.Options;
 
 namespace VSRSystemsBackend.Api.Platform.Maps;
 
-public sealed class OlaMapsService
+public sealed class GeoapifyService
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> CacheLocks = new();
     private static readonly SemaphoreSlim QuotaLock = new(1, 1);
+    private static readonly SemaphoreSlim ProviderRateLock = new(1, 1);
+    private static DateTimeOffset _nextProviderCall = DateTimeOffset.MinValue;
 
     private readonly HttpClient _httpClient;
     private readonly IDistributedCache _cache;
-    private readonly OlaMapsOptions _options;
-    private readonly ILogger<OlaMapsService> _logger;
+    private readonly GeoapifyOptions _options;
+    private readonly ILogger<GeoapifyService> _logger;
 
-    public OlaMapsService(
+    public GeoapifyService(
         HttpClient httpClient,
         IDistributedCache cache,
-        IOptions<OlaMapsOptions> options,
-        ILogger<OlaMapsService> logger)
+        IOptions<GeoapifyOptions> options,
+        ILogger<GeoapifyService> logger)
     {
         _httpClient = httpClient;
         _cache = cache;
@@ -34,8 +36,10 @@ public sealed class OlaMapsService
     public Task<IReadOnlyList<MapLocation>> SearchAsync(string query, CancellationToken cancellationToken = default)
     {
         var cleanQuery = CleanQuery(query);
-        var cacheKey = $"maps:ola:geocode:{Hash(cleanQuery.ToLowerInvariant())}";
-        var requestPath = $"places/v1/geocode?address={Uri.EscapeDataString(cleanQuery)}";
+        var cacheKey = $"maps:geoapify:geocode:{Hash(cleanQuery.ToLowerInvariant())}";
+        var requestPath = $"v1/geocode/search?text={Uri.EscapeDataString(cleanQuery)}&format=json&limit={Math.Clamp(_options.MaxResults, 1, 10)}";
+        if (!string.IsNullOrWhiteSpace(_options.CountryBias))
+            requestPath += $"&bias=countrycode:{Uri.EscapeDataString(_options.CountryBias.Trim().ToLowerInvariant())}";
         return GetLocationsAsync(cacheKey, requestPath, cancellationToken);
     }
 
@@ -45,8 +49,8 @@ public sealed class OlaMapsService
         CancellationToken cancellationToken = default)
     {
         var coordinates = string.Create(CultureInfo.InvariantCulture, $"{latitude:F5},{longitude:F5}");
-        var cacheKey = $"maps:ola:reverse:{coordinates}";
-        var requestPath = $"places/v1/reverse-geocode?latlng={coordinates}";
+        var cacheKey = $"maps:geoapify:reverse:{coordinates}";
+        var requestPath = $"v1/geocode/reverse?lat={latitude.ToString("F5", CultureInfo.InvariantCulture)}&lon={longitude.ToString("F5", CultureInfo.InvariantCulture)}&format=json&limit={Math.Clamp(_options.MaxResults, 1, 10)}";
         return GetLocationsAsync(cacheKey, requestPath, cancellationToken);
     }
 
@@ -70,11 +74,12 @@ public sealed class OlaMapsService
             if (string.IsNullOrWhiteSpace(_options.ApiKey))
                 throw new MapsNotConfiguredException();
 
+            await WaitForProviderSlotAsync(cancellationToken);
             await ConsumeProviderCallAsync(cancellationToken);
 
             using var request = new HttpRequestMessage(
                 HttpMethod.Get,
-                $"{requestPath}&api_key={Uri.EscapeDataString(_options.ApiKey)}");
+                $"{requestPath}&apiKey={Uri.EscapeDataString(_options.ApiKey)}");
             request.Headers.Accept.ParseAdd("application/json");
 
             HttpResponseMessage response;
@@ -84,19 +89,19 @@ public sealed class OlaMapsService
             }
             catch (HttpRequestException exception)
             {
-                throw new MapsProviderException("Ola Maps could not be reached.", exception);
+                throw new MapsProviderException("Geoapify could not be reached.", exception);
             }
             catch (TaskCanceledException exception) when (!cancellationToken.IsCancellationRequested)
             {
-                throw new MapsProviderException("Ola Maps timed out.", exception);
+                throw new MapsProviderException("Geoapify timed out.", exception);
             }
 
             using (response)
             {
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogWarning("Ola Maps returned HTTP {StatusCode}", (int)response.StatusCode);
-                    throw new MapsProviderException("Ola Maps returned an unsuccessful response.");
+                    _logger.LogWarning("Geoapify returned HTTP {StatusCode}", (int)response.StatusCode);
+                    throw new MapsProviderException("Geoapify returned an unsuccessful response.");
                 }
 
                 IReadOnlyList<MapLocation> locations;
@@ -110,7 +115,7 @@ public sealed class OlaMapsService
                 }
                 catch (JsonException exception)
                 {
-                    throw new MapsProviderException("Ola Maps returned invalid JSON.", exception);
+                    throw new MapsProviderException("Geoapify returned invalid JSON.", exception);
                 }
 
                 await _cache.SetStringAsync(
@@ -154,31 +159,49 @@ public sealed class OlaMapsService
         try
         {
             var now = DateTimeOffset.UtcNow;
-            var cacheKey = $"maps:ola:usage:{now:yyyyMM}";
+            var cacheKey = $"maps:geoapify:usage:{now:yyyyMMdd}";
             var rawCount = await _cache.GetStringAsync(cacheKey, cancellationToken);
             _ = int.TryParse(rawCount, NumberStyles.None, CultureInfo.InvariantCulture, out var count);
 
-            var limit = Math.Max(1, _options.MonthlyProviderCallLimit);
+            var limit = Math.Max(1, _options.DailyProviderCallLimit);
             if (count >= limit)
                 throw new MapsQuotaExceededException();
 
             count++;
-            var warningCount = (int)Math.Ceiling(limit * Math.Clamp(_options.UsageWarningPercent, 1, 100) / 100d);
+            var warningCount = Math.Clamp(_options.UsageWarningCalls, 1, limit);
             if (count == warningCount)
-                _logger.LogWarning("Ola Maps usage reached {Count} of {Limit} provider calls this month", count, limit);
+                _logger.LogWarning("Geoapify usage reached {Count} of {Limit} provider calls today", count, limit);
 
-            var nextMonth = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero)
-                .AddMonths(1)
+            var expiry = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, TimeSpan.Zero)
+                .AddDays(1)
                 .AddDays(2);
             await _cache.SetStringAsync(
                 cacheKey,
                 count.ToString(CultureInfo.InvariantCulture),
-                new DistributedCacheEntryOptions { AbsoluteExpiration = nextMonth },
+                new DistributedCacheEntryOptions { AbsoluteExpiration = expiry },
                 cancellationToken);
         }
         finally
         {
             QuotaLock.Release();
+        }
+    }
+
+    private async Task WaitForProviderSlotAsync(CancellationToken cancellationToken)
+    {
+        await ProviderRateLock.WaitAsync(cancellationToken);
+        try
+        {
+            var now = DateTimeOffset.UtcNow;
+            if (_nextProviderCall > now)
+                await Task.Delay(_nextProviderCall - now, cancellationToken);
+
+            var interval = TimeSpan.FromSeconds(1d / Math.Max(1, _options.RequestsPerSecond));
+            _nextProviderCall = DateTimeOffset.UtcNow.Add(interval);
+        }
+        finally
+        {
+            ProviderRateLock.Release();
         }
     }
 
@@ -193,15 +216,17 @@ public sealed class OlaMapsService
             if (!TryGetCoordinates(result, out var latitude, out var longitude))
                 continue;
 
-            var label = GetString(result, "formattedAddress")
+            var label = GetString(result, "formatted")
+                ?? GetString(result, "formattedAddress")
                 ?? GetString(result, "description")
                 ?? GetString(result, "name");
             if (string.IsNullOrWhiteSpace(label))
                 continue;
 
-            var id = GetString(result, "placeId")
+            var id = GetString(result, "place_id")
+                ?? GetString(result, "placeId")
                 ?? GetString(result, "id")
-                ?? $"ola-{latitude:F6}-{longitude:F6}-{index}";
+                ?? $"geoapify-{latitude:F6}-{longitude:F6}-{index}";
             index++;
             yield return new MapLocation(id, label, latitude, longitude);
         }
@@ -209,7 +234,7 @@ public sealed class OlaMapsService
 
     private static bool TryGetResults(JsonElement root, out JsonElement results)
     {
-        foreach (var propertyName in new[] { "geocodingResults", "results", "predictions" })
+        foreach (var propertyName in new[] { "results", "features", "geocodingResults", "predictions" })
         {
             if (root.TryGetProperty(propertyName, out results) && results.ValueKind == JsonValueKind.Array)
                 return true;
@@ -223,6 +248,15 @@ public sealed class OlaMapsService
     {
         latitude = 0;
         longitude = 0;
+        if (TryGetDouble(result, "lat", out latitude)
+            && (TryGetDouble(result, "lon", out longitude) || TryGetDouble(result, "lng", out longitude)))
+            return true;
+
+        if (result.TryGetProperty("properties", out var properties)
+            && TryGetDouble(properties, "lat", out latitude)
+            && (TryGetDouble(properties, "lon", out longitude) || TryGetDouble(properties, "lng", out longitude)))
+            return true;
+
         if (!result.TryGetProperty("geometry", out var geometry)
             || !geometry.TryGetProperty("location", out var location))
             return false;

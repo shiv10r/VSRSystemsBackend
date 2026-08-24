@@ -8,15 +8,16 @@ using Xunit;
 
 namespace VSRSystemsBackend.IntegrationTests;
 
-public sealed class OlaMapsServiceTests
+public sealed class GeoapifyServiceTests
 {
     private const string GeocodeResponse = """
         {
-          "geocodingResults": [
+          "results": [
             {
-              "formattedAddress": "MG Road, Bengaluru, Karnataka",
-              "placeId": "ola-place-1",
-              "geometry": { "location": { "lat": 12.9757, "lng": 77.6068 } }
+              "formatted": "MG Road, Bengaluru, Karnataka",
+              "place_id": "geoapify-place-1",
+              "lat": 12.9757,
+              "lon": 77.6068
             }
           ]
         }
@@ -39,10 +40,10 @@ public sealed class OlaMapsServiceTests
     }
 
     [Fact]
-    public async Task SearchStopsBeforeCallingProviderWhenMonthlyLimitIsReached()
+    public async Task SearchStopsBeforeCallingProviderWhenDailyLimitIsReached()
     {
         var handler = new StubHttpHandler(_ => JsonResponse(GeocodeResponse));
-        var service = CreateService(handler, monthlyLimit: 1);
+        var service = CreateService(handler, dailyLimit: 1);
 
         await service.SearchAsync("MG Road");
         await Assert.ThrowsAsync<MapsQuotaExceededException>(() => service.SearchAsync("Brigade Road"));
@@ -77,9 +78,10 @@ public sealed class OlaMapsServiceTests
             {
               "results": [
                 {
-                  "formattedAddress": "Vidhana Soudha, Bengaluru",
-                  "placeId": "ola-place-2",
-                  "geometry": { "location": { "lat": "12.9796", "lng": "77.5907" } }
+                  "formatted": "Vidhana Soudha, Bengaluru",
+                  "place_id": "geoapify-place-2",
+                  "lat": "12.9796",
+                  "lon": "77.5907"
                 }
               ]
             }
@@ -95,23 +97,24 @@ public sealed class OlaMapsServiceTests
         Assert.Equal(1, handler.CallCount);
     }
 
-    private static OlaMapsService CreateService(
+    private static GeoapifyService CreateService(
         HttpMessageHandler handler,
-        int monthlyLimit = 100,
+        int dailyLimit = 100,
         string apiKey = "test-key")
     {
         var services = new ServiceCollection();
         services.AddDistributedMemoryCache();
         var cache = services.BuildServiceProvider().GetRequiredService<IDistributedCache>();
-        var options = Options.Create(new OlaMapsOptions
+        var options = Options.Create(new GeoapifyOptions
         {
             ApiKey = apiKey,
-            MonthlyProviderCallLimit = monthlyLimit,
+            DailyProviderCallLimit = dailyLimit,
+            UsageWarningCalls = 80,
             CacheHours = 1,
             MaxResults = 6
         });
-        var client = new HttpClient(handler) { BaseAddress = new Uri("https://api.olamaps.io/") };
-        return new OlaMapsService(client, cache, options, NullLogger<OlaMapsService>.Instance);
+        var client = new HttpClient(handler) { BaseAddress = new Uri("https://api.geoapify.com/") };
+        return new GeoapifyService(client, cache, options, NullLogger<GeoapifyService>.Instance);
     }
 
     private static HttpResponseMessage JsonResponse(string json) => new(HttpStatusCode.OK)

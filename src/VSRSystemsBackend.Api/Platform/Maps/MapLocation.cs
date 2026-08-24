@@ -5,4 +5,4 @@ public sealed record MapLocation(
     string Label,
     double Latitude,
     double Longitude,
-    string Provider = "ola");
+    string Provider = "geoapify");

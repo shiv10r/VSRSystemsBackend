@@ -8,9 +8,9 @@ namespace VSRSystemsBackend.Api.Platform.Maps;
 [Route("api/maps")]
 public sealed class MapsController : ControllerBase
 {
-    private readonly OlaMapsService _maps;
+    private readonly GeoapifyService _maps;
 
-    public MapsController(OlaMapsService maps)
+    public MapsController(GeoapifyService maps)
     {
         _maps = maps;
     }

@@ -2,12 +2,12 @@ namespace VSRSystemsBackend.Api.Platform.Maps;
 
 public sealed class MapsNotConfiguredException : InvalidOperationException
 {
-    public MapsNotConfiguredException() : base("Ola Maps is not configured.") { }
+    public MapsNotConfiguredException() : base("Geoapify is not configured.") { }
 }
 
 public sealed class MapsQuotaExceededException : InvalidOperationException
 {
-    public MapsQuotaExceededException() : base("The monthly Ola Maps provider-call limit has been reached.") { }
+    public MapsQuotaExceededException() : base("The daily Geoapify provider-call limit has been reached.") { }
 }
 
 public sealed class MapsProviderException : Exception

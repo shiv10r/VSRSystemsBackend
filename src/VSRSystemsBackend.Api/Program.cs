@@ -40,10 +40,10 @@ builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IDistributedCache, VSRSystemsBackend.Api.Infrastructure.Caching.ResilientDistributedCache>();
 
 // Server-side map provider access keeps credentials private and makes Redis caching effective.
-builder.Services.Configure<OlaMapsOptions>(builder.Configuration.GetSection(OlaMapsOptions.SectionName));
-builder.Services.AddHttpClient<OlaMapsService>((serviceProvider, client) =>
+builder.Services.Configure<GeoapifyOptions>(builder.Configuration.GetSection(GeoapifyOptions.SectionName));
+builder.Services.AddHttpClient<GeoapifyService>((serviceProvider, client) =>
 {
-    var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<OlaMapsOptions>>().Value;
+    var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<GeoapifyOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
 });
