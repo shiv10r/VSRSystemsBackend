@@ -3,9 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication;
 using FluentValidation.AspNetCore;
 using VSRSystemsBackend.Infrastructure.Persistence;
 using VSRSystemsBackend.Infrastructure.Data.Seeds;
+using VSRSystemsBackend.Api.Infrastructure.Authentication;
+using VSRSystemsBackend.Api.Platform.Maps;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +38,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Distributed cache: Redis with in-memory fallback so the app works with or without Redis
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IDistributedCache, VSRSystemsBackend.Api.Infrastructure.Caching.ResilientDistributedCache>();
+
+// Server-side map provider access keeps credentials private and makes Redis caching effective.
+builder.Services.Configure<GeoapifyOptions>(builder.Configuration.GetSection(GeoapifyOptions.SectionName));
+builder.Services.AddHttpClient<GeoapifyService>((serviceProvider, client) =>
+{
+    var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<GeoapifyOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 
 // AutoMapper
 builder.Services.AddAutoMapper(config =>
@@ -180,9 +192,11 @@ builder.Services.AddCors(options =>
 // Authentication
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = CacheTokenAuthenticationHandler.SchemeName;
+    options.DefaultChallengeScheme = CacheTokenAuthenticationHandler.SchemeName;
+    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
+.AddScheme<AuthenticationSchemeOptions, CacheTokenAuthenticationHandler>(CacheTokenAuthenticationHandler.SchemeName, _ => { })
 .AddCookie()
 .AddGoogle(options =>
 {
