@@ -17,11 +17,15 @@ public sealed class HomeServicesChatContextAuthorizer : IChatContextAuthorizer
     }
 
     public async Task<AuthorizedChatContext?> AuthorizeAsync(
+        string moduleKey,
         string conversationId,
         string userId,
         bool hasAdministrativeAccess,
         CancellationToken cancellationToken = default)
     {
+        if (!string.Equals(moduleKey, ChatModules.HomeServices, StringComparison.OrdinalIgnoreCase))
+            return null;
+
         var isAuthorized = await _bookingAuthorizer.CanSubscribeToHomeServicesBookingAsync(
             userId,
             hasAdministrativeAccess,

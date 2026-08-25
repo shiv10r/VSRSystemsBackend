@@ -249,9 +249,12 @@ public sealed class RealtimeHub : Hub
             Context.ConnectionAborted);
     }
 
-    public async Task SubscribeToTypingIndicators(string conversationId)
+    public Task SubscribeToTypingIndicators(string conversationId) =>
+        SubscribeToModuleTypingIndicators(ChatModules.HomeServices, conversationId);
+
+    public async Task SubscribeToModuleTypingIndicators(string moduleKey, string conversationId)
     {
-        var context = await AuthorizeChatContextAsync(conversationId);
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
         await Groups.AddToGroupAsync(
             Context.ConnectionId,
             RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
@@ -263,18 +266,24 @@ public sealed class RealtimeHub : Hub
         await SubscribeToTypingIndicators(conversationId);
     }
 
-    public async Task UnsubscribeFromTypingIndicators(string conversationId)
+    public Task UnsubscribeFromTypingIndicators(string conversationId) =>
+        UnsubscribeFromModuleTypingIndicators(ChatModules.HomeServices, conversationId);
+
+    public async Task UnsubscribeFromModuleTypingIndicators(string moduleKey, string conversationId)
     {
-        var context = await AuthorizeChatContextAsync(conversationId);
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
         await Groups.RemoveFromGroupAsync(
             Context.ConnectionId,
             RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
             Context.ConnectionAborted);
     }
 
-    public async Task BroadcastTypingIndicator(string conversationId, bool isTyping)
+    public Task BroadcastTypingIndicator(string conversationId, bool isTyping) =>
+        BroadcastModuleTypingIndicator(ChatModules.HomeServices, conversationId, isTyping);
+
+    public async Task BroadcastModuleTypingIndicator(string moduleKey, string conversationId, bool isTyping)
     {
-        var context = await AuthorizeChatContextAsync(conversationId);
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
         var userId = GetUserId() ?? throw new HubException("Authentication is required.");
         var message = new RealtimeEventEnvelope<object>(
             Guid.NewGuid(),
@@ -288,27 +297,36 @@ public sealed class RealtimeHub : Hub
             .SendAsync(RealtimeGroups.ClientMethod, message, Context.ConnectionAborted);
     }
 
-    public async Task SubscribeToMessageRead(string conversationId)
+    public Task SubscribeToMessageRead(string conversationId) =>
+        SubscribeToModuleMessageRead(ChatModules.HomeServices, conversationId);
+
+    public async Task SubscribeToModuleMessageRead(string moduleKey, string conversationId)
     {
-        var context = await AuthorizeChatContextAsync(conversationId);
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
         await Groups.AddToGroupAsync(
             Context.ConnectionId,
             RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
             Context.ConnectionAborted);
     }
 
-    public async Task UnsubscribeFromMessageRead(string conversationId)
+    public Task UnsubscribeFromMessageRead(string conversationId) =>
+        UnsubscribeFromModuleMessageRead(ChatModules.HomeServices, conversationId);
+
+    public async Task UnsubscribeFromModuleMessageRead(string moduleKey, string conversationId)
     {
-        var context = await AuthorizeChatContextAsync(conversationId);
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
         await Groups.RemoveFromGroupAsync(
             Context.ConnectionId,
             RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
             Context.ConnectionAborted);
     }
 
-    public async Task BroadcastMessageRead(string conversationId, string messageId)
+    public Task BroadcastMessageRead(string conversationId, string messageId) =>
+        BroadcastModuleMessageRead(ChatModules.HomeServices, conversationId, messageId);
+
+    public async Task BroadcastModuleMessageRead(string moduleKey, string conversationId, string messageId)
     {
-        var context = await AuthorizeChatContextAsync(conversationId);
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
         var userId = GetUserId() ?? throw new HubException("Authentication is required.");
         var message = new RealtimeEventEnvelope<object>(
             Guid.NewGuid(),
@@ -365,30 +383,37 @@ public sealed class RealtimeHub : Hub
             RealtimeGroups.HomeServicesBooking(bookingId),
             Context.ConnectionAborted);
 
-    public async Task SubscribeToChatConversation(string conversationId)
+    public Task SubscribeToChatConversation(string conversationId) =>
+        SubscribeToModuleChatConversation(ChatModules.HomeServices, conversationId);
+
+    public async Task SubscribeToModuleChatConversation(string moduleKey, string conversationId)
     {
-        var context = await AuthorizeChatContextAsync(conversationId);
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
         await Groups.AddToGroupAsync(
             Context.ConnectionId,
             RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
             Context.ConnectionAborted);
     }
 
-    public async Task UnsubscribeFromChatConversation(string conversationId)
+    public Task UnsubscribeFromChatConversation(string conversationId) =>
+        UnsubscribeFromModuleChatConversation(ChatModules.HomeServices, conversationId);
+
+    public async Task UnsubscribeFromModuleChatConversation(string moduleKey, string conversationId)
     {
-        var context = await AuthorizeChatContextAsync(conversationId);
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
         await Groups.RemoveFromGroupAsync(
             Context.ConnectionId,
             RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
             Context.ConnectionAborted);
     }
 
-    private async Task<AuthorizedChatContext> AuthorizeChatContextAsync(string conversationId)
+    private async Task<AuthorizedChatContext> AuthorizeChatContextAsync(string moduleKey, string conversationId)
     {
         var userId = GetUserId();
         var context = userId is null
             ? null
             : await _chatContextAuthorizer.AuthorizeAsync(
+                moduleKey,
                 conversationId,
                 userId,
                 HasAdministrativeAccess(),
@@ -398,8 +423,9 @@ public sealed class RealtimeHub : Hub
             return context;
 
         _logger.LogWarning(
-            "Realtime chat subscription denied for connection {ConnectionId} and conversation {ConversationId}",
+            "Realtime chat subscription denied for connection {ConnectionId}, module {ModuleKey}, and conversation {ConversationId}",
             Context.ConnectionId,
+            moduleKey,
             conversationId);
         throw new HubException("You are not authorized to subscribe to this conversation.");
     }

@@ -25,6 +25,7 @@ public sealed class ChatService : IChatService
     }
 
     public async Task<ChatMessageDto> SendMessageAsync(
+        string moduleKey,
         string conversationId,
         string userId,
         bool hasAdministrativeAccess,
@@ -33,6 +34,7 @@ public sealed class ChatService : IChatService
         CancellationToken cancellationToken = default)
     {
         var context = await AuthorizeAsync(
+            moduleKey,
             conversationId,
             userId,
             hasAdministrativeAccess,
@@ -83,6 +85,7 @@ public sealed class ChatService : IChatService
     }
 
     public async Task<ChatMessagePageDto> GetMessagesAsync(
+        string moduleKey,
         string conversationId,
         string userId,
         bool hasAdministrativeAccess,
@@ -91,6 +94,7 @@ public sealed class ChatService : IChatService
         CancellationToken cancellationToken = default)
     {
         var context = await AuthorizeAsync(
+            moduleKey,
             conversationId,
             userId,
             hasAdministrativeAccess,
@@ -115,15 +119,17 @@ public sealed class ChatService : IChatService
     }
 
     private async Task<AuthorizedChatContext> AuthorizeAsync(
+        string moduleKey,
         string conversationId,
         string userId,
         bool hasAdministrativeAccess,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(conversationId) || string.IsNullOrWhiteSpace(userId))
+        if (string.IsNullOrWhiteSpace(moduleKey) || string.IsNullOrWhiteSpace(conversationId) || string.IsNullOrWhiteSpace(userId))
             throw new ChatAccessDeniedException();
 
         return await _contextAuthorizer.AuthorizeAsync(
+                moduleKey,
                 conversationId,
                 userId,
                 hasAdministrativeAccess,

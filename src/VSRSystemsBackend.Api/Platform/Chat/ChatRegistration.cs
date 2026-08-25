@@ -8,7 +8,8 @@ public static class ChatRegistration
     public static IServiceCollection AddChat(this IServiceCollection services)
     {
         services.AddScoped<IChatService, ChatService>();
-        services.AddScoped<IChatContextAuthorizer, HomeServicesChatContextAuthorizer>();
+        services.AddScoped<HomeServicesChatContextAuthorizer>();
+        services.AddScoped<IChatContextAuthorizer, ModuleChatContextAuthorizer>();
         services.AddSingleton<IChatMessageRepository, MongoChatMessageRepository>();
         return services;
     }

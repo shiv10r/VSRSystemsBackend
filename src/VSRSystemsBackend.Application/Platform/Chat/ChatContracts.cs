@@ -3,6 +3,11 @@ using System.Globalization;
 
 namespace VSRSystemsBackend.Application.Platform.Chat;
 
+public static class ChatModules
+{
+    public const string HomeServices = "home-services";
+}
+
 public sealed class SendChatMessageRequest
 {
     [Required]
