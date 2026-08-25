@@ -24,4 +24,6 @@ public static class RealtimeGroups
     public static string HomeServicesBooking(string bookingId) => $"context:home-services.booking:{bookingId}";
     public static string ChatConversation(string tenantId, string conversationId) =>
         $"context:chat.conversation:{tenantId}:{conversationId}";
+    public static string SchoolMessage(string conversationId) =>
+        $"context:school.message:{conversationId}";
 }
