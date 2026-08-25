@@ -40,4 +40,6 @@ public static class RealtimeGroups
         $"context:news.message:{conversationId}";
     public static string JobsMessage(string conversationId) =>
         $"context:jobs.message:{conversationId}";
+    public static string CommerceMessage(string conversationId) =>
+        $"context:commerce.message:{conversationId}";
 }
