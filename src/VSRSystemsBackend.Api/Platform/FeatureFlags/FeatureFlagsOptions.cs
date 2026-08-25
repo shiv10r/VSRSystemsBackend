@@ -1,3 +1,5 @@
+namespace VSRSystemsBackend.Api.Platform.FeatureFlags;
+
 public class FeatureFlagsOptions
 {
     public const string SectionName = "FeatureFlags";

@@ -1,3 +1,5 @@
+namespace VSRSystemsBackend.Api.Platform.Settings;
+
 public class SettingsOptions
 {
     public const string SectionName = "Settings";
