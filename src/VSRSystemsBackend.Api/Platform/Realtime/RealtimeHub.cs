@@ -37,7 +37,10 @@ public sealed class RealtimeHub : Hub
 
         var tenantId = Context.User?.FindFirst("tenant_id")?.Value;
         if (!string.IsNullOrWhiteSpace(tenantId))
+        {
             await Groups.AddToGroupAsync(Context.ConnectionId, RealtimeGroups.Tenant(tenantId));
+            await Groups.AddToGroupAsync(Context.ConnectionId, RealtimeGroups.Presence(tenantId));
+        }
 
         _logger.LogInformation("Realtime connection {ConnectionId} established for user {UserId}", Context.ConnectionId, userId);
         await base.OnConnectedAsync();
@@ -45,6 +48,15 @@ public sealed class RealtimeHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        var userId = GetUserId();
+        var tenantId = Context.User?.FindFirst("tenant_id")?.Value;
+        
+        if (!string.IsNullOrWhiteSpace(tenantId))
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, RealtimeGroups.Presence(tenantId));
+            await BroadcastPresenceUpdate(tenantId, userId ?? "unknown", false, exception != null ? "disconnected" : null);
+        }
+
         _logger.LogInformation(exception, "Realtime connection {ConnectionId} disconnected", Context.ConnectionId);
         await base.OnDisconnectedAsync(exception);
     }
@@ -234,6 +246,42 @@ public sealed class RealtimeHub : Hub
             Context.ConnectionId,
             RealtimeGroups.MedicalMessage(conversationId),
             Context.ConnectionAborted);
+    }
+
+    public async Task SubscribeToPresence(string tenantId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.Presence(tenantId),
+            Context.ConnectionAborted);
+    }
+
+    public Task UnsubscribeFromPresence(string tenantId) =>
+        Groups.RemoveFromGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.Presence(tenantId),
+            Context.ConnectionAborted);
+
+    public async Task BroadcastPresenceUpdate(string tenantId, string userId, bool isOnline, string? statusMessage = null)
+    {
+        var message = new
+        {
+            type = "presence",
+            tenantId,
+            userId,
+            isOnline,
+            statusMessage,
+            timestamp = DateTimeOffset.UtcNow
+        };
+        await Clients.Group(RealtimeGroups.Presence(tenantId))
+            .SendAsync("realtimeEvent", message);
     }
 
     public Task UnsubscribeFromHomeServicesBooking(string bookingId) =>

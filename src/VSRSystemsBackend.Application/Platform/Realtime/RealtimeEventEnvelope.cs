@@ -46,4 +46,5 @@ public static class RealtimeGroups
         $"context:bank.message:{conversationId}";
     public static string MedicalMessage(string conversationId) =>
         $"context:medical.message:{conversationId}";
+    public static string Presence(string tenantId) => $"presence:{tenantId}";
 }
