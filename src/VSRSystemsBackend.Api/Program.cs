@@ -151,7 +151,7 @@ builder.Services.AddHttpClient<UploadNotificationService>(client =>
 {
     client.BaseAddress = new Uri("https://api.resend.com/");
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+}).AddStandardResilienceHandler();
 
 // AutoMapper
 builder.Services.AddAutoMapper(config =>
