@@ -248,6 +248,42 @@ public sealed class RealtimeHub : Hub
             Context.ConnectionAborted);
     }
 
+    public async Task SubscribeToTypingIndicators(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            $"typing:{conversationId}",
+            Context.ConnectionAborted);
+    }
+
+    public Task UnsubscribeFromTypingIndicators(string conversationId) =>
+        Groups.RemoveFromGroupAsync(
+            Context.ConnectionId,
+            $"typing:{conversationId}",
+            Context.ConnectionAborted);
+
+    public async Task BroadcastTypingIndicator(string conversationId, string userId, bool isTyping, string? statusMessage = null)
+    {
+        var message = new
+        {
+            type = "typing-indicator",
+            conversationId,
+            userId,
+            isTyping,
+            statusMessage,
+            timestamp = DateTimeOffset.UtcNow
+        };
+        await Clients.Group($"typing:{conversationId}")
+            .SendAsync("realtimeEvent", message);
+    }
+
     public async Task SubscribeToPresence(string tenantId)
     {
         var userId = GetUserId();
