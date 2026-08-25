@@ -32,4 +32,6 @@ public static class RealtimeGroups
         $"context:home-services.message:{conversationId}";
     public static string TravelMessage(string conversationId) =>
         $"context:travel.message:{conversationId}";
+    public static string RailwayMessage(string conversationId) =>
+        $"context:railway.message:{conversationId}";
 }
