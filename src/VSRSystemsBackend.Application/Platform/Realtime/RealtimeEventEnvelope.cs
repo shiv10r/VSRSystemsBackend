@@ -42,4 +42,6 @@ public static class RealtimeGroups
         $"context:jobs.message:{conversationId}";
     public static string CommerceMessage(string conversationId) =>
         $"context:commerce.message:{conversationId}";
+    public static string BankMessage(string conversationId) =>
+        $"context:bank.message:{conversationId}";
 }
