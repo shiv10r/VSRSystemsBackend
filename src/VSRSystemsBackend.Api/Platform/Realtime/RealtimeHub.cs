@@ -37,7 +37,11 @@ public sealed class RealtimeHub : Hub
 
         var tenantId = Context.User?.FindFirst("tenant_id")?.Value;
         if (!string.IsNullOrWhiteSpace(tenantId))
+        {
             await Groups.AddToGroupAsync(Context.ConnectionId, RealtimeGroups.Tenant(tenantId));
+            await Groups.AddToGroupAsync(Context.ConnectionId, RealtimeGroups.Presence(tenantId));
+            await BroadcastPresenceUpdate(tenantId, userId, true);
+        }
 
         _logger.LogInformation("Realtime connection {ConnectionId} established for user {UserId}", Context.ConnectionId, userId);
         await base.OnConnectedAsync();
@@ -45,6 +49,15 @@ public sealed class RealtimeHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        var userId = GetUserId();
+        var tenantId = Context.User?.FindFirst("tenant_id")?.Value;
+        
+        if (!string.IsNullOrWhiteSpace(tenantId))
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, RealtimeGroups.Presence(tenantId));
+            await BroadcastPresenceUpdate(tenantId, userId ?? "unknown", false, exception != null ? "disconnected" : null);
+        }
+
         _logger.LogInformation(exception, "Realtime connection {ConnectionId} disconnected", Context.ConnectionId);
         await base.OnDisconnectedAsync(exception);
     }
@@ -71,36 +84,336 @@ public sealed class RealtimeHub : Hub
             Context.ConnectionAborted);
     }
 
-    public Task UnsubscribeFromHomeServicesBooking(string bookingId) =>
-        Groups.RemoveFromGroupAsync(
-            Context.ConnectionId,
-            RealtimeGroups.HomeServicesBooking(bookingId),
-            Context.ConnectionAborted);
-
-    public async Task SubscribeToChatConversation(string conversationId)
+    public async Task SubscribeToSchoolMessage(string conversationId)
     {
-        var context = await AuthorizeChatContextAsync(conversationId);
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.SchoolMessage(conversationId),
+            Context.ConnectionAborted);
+    }
+
+    public async Task SubscribeToWarehouseMessage(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.WarehouseMessage(conversationId),
+            Context.ConnectionAborted);
+    }
+
+    public async Task SubscribeToHomeServicesMessage(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.HomeServicesMessage(conversationId),
+            Context.ConnectionAborted);
+    }
+
+    public async Task SubscribeToTravelMessage(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.TravelMessage(conversationId),
+            Context.ConnectionAborted);
+    }
+
+    public async Task SubscribeToRailwayMessage(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.RailwayMessage(conversationId),
+            Context.ConnectionAborted);
+    }
+
+    public async Task SubscribeToHotelMessage(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.HotelMessage(conversationId),
+            Context.ConnectionAborted);
+    }
+
+    public async Task SubscribeToNewsMessage(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.NewsMessage(conversationId),
+            Context.ConnectionAborted);
+    }
+
+    public async Task SubscribeToJobsMessage(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.JobsMessage(conversationId),
+            Context.ConnectionAborted);
+    }
+
+    public async Task SubscribeToCommerceMessage(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.CommerceMessage(conversationId),
+            Context.ConnectionAborted);
+    }
+
+    public async Task SubscribeToBankMessage(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.BankMessage(conversationId),
+            Context.ConnectionAborted);
+    }
+
+    public async Task SubscribeToMedicalMessage(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.MedicalMessage(conversationId),
+            Context.ConnectionAborted);
+    }
+
+    public Task SubscribeToTypingIndicators(string conversationId) =>
+        SubscribeToModuleTypingIndicators(ChatModules.HomeServices, conversationId);
+
+    public async Task SubscribeToModuleTypingIndicators(string moduleKey, string conversationId)
+    {
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
         await Groups.AddToGroupAsync(
             Context.ConnectionId,
             RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
             Context.ConnectionAborted);
     }
 
-    public async Task UnsubscribeFromChatConversation(string conversationId)
+    public async Task SubscribeToTypingIndicator(string conversationId)
     {
-        var context = await AuthorizeChatContextAsync(conversationId);
+        await SubscribeToTypingIndicators(conversationId);
+    }
+
+    public Task UnsubscribeFromTypingIndicators(string conversationId) =>
+        UnsubscribeFromModuleTypingIndicators(ChatModules.HomeServices, conversationId);
+
+    public async Task UnsubscribeFromModuleTypingIndicators(string moduleKey, string conversationId)
+    {
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
         await Groups.RemoveFromGroupAsync(
             Context.ConnectionId,
             RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
             Context.ConnectionAborted);
     }
 
-    private async Task<AuthorizedChatContext> AuthorizeChatContextAsync(string conversationId)
+    public Task BroadcastTypingIndicator(string conversationId, bool isTyping) =>
+        BroadcastModuleTypingIndicator(ChatModules.HomeServices, conversationId, isTyping);
+
+    public async Task BroadcastModuleTypingIndicator(string moduleKey, string conversationId, bool isTyping)
+    {
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
+        var userId = GetUserId() ?? throw new HubException("Authentication is required.");
+        var message = new RealtimeEventEnvelope<object>(
+            Guid.NewGuid(),
+            RealtimeEventTypes.PlatformChatTypingIndicator,
+            1,
+            DateTimeOffset.UtcNow,
+            Context.ConnectionId,
+            context.TenantId,
+            new { conversationId = context.ConversationId, userId, isTyping });
+        await Clients.OthersInGroup(RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId))
+            .SendAsync(RealtimeGroups.ClientMethod, message, Context.ConnectionAborted);
+    }
+
+    public Task SubscribeToMessageRead(string conversationId) =>
+        SubscribeToModuleMessageRead(ChatModules.HomeServices, conversationId);
+
+    public async Task SubscribeToModuleMessageRead(string moduleKey, string conversationId)
+    {
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
+            Context.ConnectionAborted);
+    }
+
+    public Task UnsubscribeFromMessageRead(string conversationId) =>
+        UnsubscribeFromModuleMessageRead(ChatModules.HomeServices, conversationId);
+
+    public async Task UnsubscribeFromModuleMessageRead(string moduleKey, string conversationId)
+    {
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
+        await Groups.RemoveFromGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
+            Context.ConnectionAborted);
+    }
+
+    public Task BroadcastMessageRead(string conversationId, string messageId) =>
+        BroadcastModuleMessageRead(ChatModules.HomeServices, conversationId, messageId);
+
+    public async Task BroadcastModuleMessageRead(string moduleKey, string conversationId, string messageId)
+    {
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
+        var userId = GetUserId() ?? throw new HubException("Authentication is required.");
+        var message = new RealtimeEventEnvelope<object>(
+            Guid.NewGuid(),
+            RealtimeEventTypes.PlatformChatMessageRead,
+            1,
+            DateTimeOffset.UtcNow,
+            Context.ConnectionId,
+            context.TenantId,
+            new { conversationId = context.ConversationId, messageId, userId });
+        await Clients.OthersInGroup(RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId))
+            .SendAsync(RealtimeGroups.ClientMethod, message, Context.ConnectionAborted);
+    }
+
+    public async Task SubscribeToPresence(string tenantId)
+    {
+        var userId = GetUserId();
+        var authenticatedTenantId = Context.User?.FindFirst("tenant_id")?.Value;
+        if (userId is null || string.IsNullOrWhiteSpace(authenticatedTenantId)
+            || !string.Equals(tenantId, authenticatedTenantId, StringComparison.Ordinal))
+        {
+            throw new HubException("You are not authorized to subscribe to this presence group.");
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.Presence(tenantId),
+            Context.ConnectionAborted);
+    }
+
+    public Task UnsubscribeFromPresence(string tenantId) =>
+        Groups.RemoveFromGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.Presence(tenantId),
+            Context.ConnectionAborted);
+
+    private async Task BroadcastPresenceUpdate(string tenantId, string userId, bool isOnline, string? statusMessage = null)
+    {
+        var message = new
+        {
+            type = "presence",
+            tenantId,
+            userId,
+            isOnline,
+            statusMessage,
+            timestamp = DateTimeOffset.UtcNow
+        };
+        await Clients.Group(RealtimeGroups.Presence(tenantId))
+            .SendAsync("realtimeEvent", message);
+    }
+
+    public Task UnsubscribeFromHomeServicesBooking(string bookingId) =>
+        Groups.RemoveFromGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.HomeServicesBooking(bookingId),
+            Context.ConnectionAborted);
+
+    public Task SubscribeToChatConversation(string conversationId) =>
+        SubscribeToModuleChatConversation(ChatModules.HomeServices, conversationId);
+
+    public async Task SubscribeToModuleChatConversation(string moduleKey, string conversationId)
+    {
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
+            Context.ConnectionAborted);
+    }
+
+    public Task UnsubscribeFromChatConversation(string conversationId) =>
+        UnsubscribeFromModuleChatConversation(ChatModules.HomeServices, conversationId);
+
+    public async Task UnsubscribeFromModuleChatConversation(string moduleKey, string conversationId)
+    {
+        var context = await AuthorizeChatContextAsync(moduleKey, conversationId);
+        await Groups.RemoveFromGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
+            Context.ConnectionAborted);
+    }
+
+    private async Task<AuthorizedChatContext> AuthorizeChatContextAsync(string moduleKey, string conversationId)
     {
         var userId = GetUserId();
         var context = userId is null
             ? null
             : await _chatContextAuthorizer.AuthorizeAsync(
+                moduleKey,
                 conversationId,
                 userId,
                 HasAdministrativeAccess(),
@@ -110,8 +423,9 @@ public sealed class RealtimeHub : Hub
             return context;
 
         _logger.LogWarning(
-            "Realtime chat subscription denied for connection {ConnectionId} and conversation {ConversationId}",
+            "Realtime chat subscription denied for connection {ConnectionId}, module {ModuleKey}, and conversation {ConversationId}",
             Context.ConnectionId,
+            moduleKey,
             conversationId);
         throw new HubException("You are not authorized to subscribe to this conversation.");
     }

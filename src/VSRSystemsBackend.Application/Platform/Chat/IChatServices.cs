@@ -3,6 +3,7 @@ namespace VSRSystemsBackend.Application.Platform.Chat;
 public interface IChatContextAuthorizer
 {
     Task<AuthorizedChatContext?> AuthorizeAsync(
+        string moduleKey,
         string conversationId,
         string userId,
         bool hasAdministrativeAccess,
@@ -26,6 +27,7 @@ public interface IChatMessageRepository
 public interface IChatService
 {
     Task<ChatMessageDto> SendMessageAsync(
+        string moduleKey,
         string conversationId,
         string userId,
         bool hasAdministrativeAccess,
@@ -34,6 +36,7 @@ public interface IChatService
         CancellationToken cancellationToken = default);
 
     Task<ChatMessagePageDto> GetMessagesAsync(
+        string moduleKey,
         string conversationId,
         string userId,
         bool hasAdministrativeAccess,

@@ -22,6 +22,7 @@ public sealed class ChatController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<ApiResponse<ChatMessagePageDto>>> GetMessages(
         string conversationId,
+        [FromQuery] string module = ChatModules.HomeServices,
         [FromQuery] string? before = null,
         [FromQuery] int limit = 30,
         CancellationToken cancellationToken = default)
@@ -33,6 +34,7 @@ public sealed class ChatController : ControllerBase
         try
         {
             var result = await _chat.GetMessagesAsync(
+                module,
                 conversationId,
                 userId,
                 HasAdministrativeAccess(),
@@ -59,6 +61,7 @@ public sealed class ChatController : ControllerBase
     public async Task<ActionResult<ApiResponse<ChatMessageDto>>> SendMessage(
         string conversationId,
         [FromBody] SendChatMessageRequest request,
+        [FromQuery] string module = ChatModules.HomeServices,
         CancellationToken cancellationToken = default)
     {
         var userId = GetUserId();
@@ -68,6 +71,7 @@ public sealed class ChatController : ControllerBase
         try
         {
             var result = await _chat.SendMessageAsync(
+                module,
                 conversationId,
                 userId,
                 HasAdministrativeAccess(),

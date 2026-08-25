@@ -47,6 +47,7 @@ public sealed class ChatServiceTests
         var service = CreateService(contextAuthorizer, repository, publisher);
 
         var result = await service.SendMessageAsync(
+            ChatModules.HomeServices,
             "booking-1",
             "user-1",
             false,
@@ -75,6 +76,7 @@ public sealed class ChatServiceTests
         var service = CreateService(AuthorizedContext(), repository, publisher);
 
         var result = await service.SendMessageAsync(
+            ChatModules.HomeServices,
             "booking-1",
             "user-1",
             false,
@@ -95,6 +97,7 @@ public sealed class ChatServiceTests
         var service = CreateService(AuthorizedContext(), repository, publisher);
 
         await Assert.ThrowsAsync<ChatUnavailableException>(() => service.SendMessageAsync(
+            ChatModules.HomeServices,
             "booking-1",
             "user-1",
             false,
@@ -114,6 +117,7 @@ public sealed class ChatServiceTests
         contextAuthorizer.Setup(authorizer => authorizer.AuthorizeAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
+                It.IsAny<string>(),
                 It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((AuthorizedChatContext?)null);
@@ -124,6 +128,7 @@ public sealed class ChatServiceTests
             new Mock<IRealtimePublisher>());
 
         await Assert.ThrowsAsync<ChatAccessDeniedException>(() => service.GetMessagesAsync(
+            ChatModules.HomeServices,
             "booking-1",
             "other-user",
             false,
@@ -161,7 +166,7 @@ public sealed class ChatServiceTests
             repository,
             new Mock<IRealtimePublisher>());
 
-        var page = await service.GetMessagesAsync("booking-1", "user-1", false, null, 2);
+        var page = await service.GetMessagesAsync(ChatModules.HomeServices, "booking-1", "user-1", false, null, 2);
 
         Assert.Equal(2, page.Items.Count);
         Assert.True(ChatCursorCodec.TryDecode(page.NextCursor, out var cursor));
@@ -179,6 +184,7 @@ public sealed class ChatServiceTests
             new Mock<IRealtimePublisher>());
 
         await Assert.ThrowsAsync<ChatValidationException>(() => service.GetMessagesAsync(
+            ChatModules.HomeServices,
             "booking-1",
             "user-1",
             false,
@@ -200,13 +206,31 @@ public sealed class ChatServiceTests
             .ReturnsAsync(true);
         var authorizer = new HomeServicesChatContextAuthorizer(bookingAuthorizer.Object);
 
-        var context = await authorizer.AuthorizeAsync("booking-1", "user-1", false);
-        var denied = await authorizer.AuthorizeAsync("booking-2", "user-1", false);
+        var context = await authorizer.AuthorizeAsync(ChatModules.HomeServices, "booking-1", "user-1", false);
+        var denied = await authorizer.AuthorizeAsync(ChatModules.HomeServices, "booking-2", "user-1", false);
 
         Assert.NotNull(context);
         Assert.Equal("home-services", context.TenantId);
         Assert.Equal("home-services.booking", context.ContextType);
         Assert.Null(denied);
+    }
+
+    [Fact]
+    public async Task ModuleContextRequiresAdministrativeAccessUntilOwnershipProviderExists()
+    {
+        var bookingAuthorizer = new Mock<IRealtimeSubscriptionAuthorizer>();
+        var authorizer = new ModuleChatContextAuthorizer(
+            new HomeServicesChatContextAuthorizer(bookingAuthorizer.Object));
+
+        var context = await authorizer.AuthorizeAsync("interior", "project-1", "user-1", true);
+        var denied = await authorizer.AuthorizeAsync("interior", "project-1", "user-1", false);
+        var unknown = await authorizer.AuthorizeAsync("unknown", "project-1", "user-1", true);
+
+        Assert.NotNull(context);
+        Assert.Equal("interior", context.TenantId);
+        Assert.Equal("interior.message", context.ContextType);
+        Assert.Null(denied);
+        Assert.Null(unknown);
     }
 
     [Fact]
@@ -236,6 +260,7 @@ public sealed class ChatServiceTests
     {
         var contextAuthorizer = new Mock<IChatContextAuthorizer>();
         contextAuthorizer.Setup(authorizer => authorizer.AuthorizeAsync(
+                ChatModules.HomeServices,
                 "booking-1",
                 It.IsAny<string>(),
                 It.IsAny<bool>(),

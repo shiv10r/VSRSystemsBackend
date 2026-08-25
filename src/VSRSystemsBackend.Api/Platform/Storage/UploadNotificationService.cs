@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.Extensions.Options;
 
 namespace VSRSystemsBackend.Api.Platform.Storage;
@@ -38,6 +40,7 @@ public sealed class UploadNotificationService
         var safeBucket = WebUtility.HtmlEncode(upload.Bucket);
         using var request = new HttpRequestMessage(HttpMethod.Post, "emails");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ResendApiKey);
+        request.Headers.Add("Idempotency-Key", CreateIdempotencyKey(recipient, upload));
         request.Content = JsonContent.Create(new
         {
             from = _options.FromEmail,
@@ -64,6 +67,12 @@ public sealed class UploadNotificationService
 
     private static string FormatBytes(long value) =>
         value < 1_048_576 ? $"{Math.Max(1, value / 1024)} KB" : $"{value / 1_048_576d:F1} MB";
+
+    private static string CreateIdempotencyKey(string recipient, UploadCompletedRequest upload)
+    {
+        var value = $"{recipient}|{upload.Bucket}|{upload.Path}|{upload.SizeBytes}";
+        return $"upload-{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant()}";
+    }
 
     private static string MaskEmail(string value)
     {

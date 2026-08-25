@@ -12,13 +12,19 @@ using VSRSystemsBackend.Infrastructure.Persistence;
 using VSRSystemsBackend.Infrastructure.Persistence.Mongo;
 using VSRSystemsBackend.Infrastructure.Data.Seeds;
 using VSRSystemsBackend.Api.Infrastructure.Authentication;
+using VSRSystemsBackend.Api.Infrastructure.Observability;
 using VSRSystemsBackend.Api.Platform.Chat;
+using VSRSystemsBackend.Api.Platform.FeatureFlags;
 using VSRSystemsBackend.Api.Platform.Health;
 using VSRSystemsBackend.Api.Platform.Maps;
 using VSRSystemsBackend.Api.Platform.AI;
 using VSRSystemsBackend.Api.Platform.Realtime;
 using VSRSystemsBackend.Api.Platform.Storage;
+using VSRSystemsBackend.Api.Platform.Settings;
 using VSRSystemsBackend.Api.Platform.Weather;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +46,24 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { Title = "VSR Systems Backend API", Version = "v1" });
     c.CustomSchemaIds(type => type.FullName?.Replace('+', '.') ?? type.Name);
 });
+
+var openTelemetry = builder.Services
+    .AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("VSRSystemsBackend.Api"))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation())
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation());
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
+{
+    openTelemetry
+        .WithTracing(tracing => tracing.AddOtlpExporter())
+        .WithMetrics(metrics => metrics.AddOtlpExporter());
+}
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -94,7 +118,7 @@ builder.Services.AddHttpClient<GeoapifyService>((serviceProvider, client) =>
     var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<GeoapifyOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+}).AddStandardResilienceHandler();
 
 // Platform integrations are server-side so provider credentials never reach the browser.
 builder.Services.Configure<WeatherOptions>(builder.Configuration.GetSection(WeatherOptions.SectionName));
@@ -103,7 +127,7 @@ builder.Services.AddHttpClient<OpenMeteoWeatherService>((serviceProvider, client
     var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<WeatherOptions>>().Value;
     client.BaseAddress = new Uri(options.BaseUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+}).AddStandardResilienceHandler();
 
 builder.Services.Configure<AiGatewayOptions>(builder.Configuration.GetSection(AiGatewayOptions.SectionName));
 builder.Services.AddHttpClient<AiGatewayService>(client =>
@@ -120,11 +144,14 @@ builder.Services.PostConfigure<UploadNotificationOptions>(options =>
     if (string.IsNullOrWhiteSpace(options.RecipientEmail))
         options.RecipientEmail = builder.Configuration["UPLOAD_NOTIFICATION_EMAIL"] ?? string.Empty;
 });
+builder.Services.Configure<FeatureFlagsOptions>(builder.Configuration.GetSection(FeatureFlagsOptions.SectionName));
+builder.Services.Configure<SettingsOptions>(builder.Configuration.GetSection(SettingsOptions.SectionName));
+builder.Services.AddSingleton<FeatureFlagService>();
 builder.Services.AddHttpClient<UploadNotificationService>(client =>
 {
     client.BaseAddress = new Uri("https://api.resend.com/");
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+}).AddStandardResilienceHandler();
 
 // AutoMapper
 builder.Services.AddAutoMapper(config =>
@@ -181,7 +208,7 @@ builder.Services.AddHttpClient<VSRSystemsBackend.Application.Jobs.Interfaces.IJo
 {
     client.Timeout = TimeSpan.FromSeconds(60);
     client.DefaultRequestHeaders.Add("Accept", "application/json, application/xml, text/html, */*");
-});
+}).AddStandardResilienceHandler();
 if (builder.Configuration.GetValue<bool>("JobsScraper:SchedulerEnabled"))
     builder.Services.AddHostedService<VSRSystemsBackend.Api.Modules.Jobs.Services.JobsScraperScheduler>();
 
@@ -287,6 +314,7 @@ builder.Services.AddAuthentication(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
+app.UseMiddleware<CorrelationIdMiddleware>();
 // Swagger enabled in all environments so the home-services API can be tested on Render too
 app.UseSwagger();
 app.UseSwaggerUI(c =>
