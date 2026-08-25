@@ -101,6 +101,21 @@ public sealed class RealtimeHub : Hub
             Context.ConnectionAborted);
     }
 
+    public async Task SubscribeToHomeServicesMessage(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.HomeServicesMessage(conversationId),
+            Context.ConnectionAborted);
+    }
+
     public Task UnsubscribeFromHomeServicesBooking(string bookingId) =>
         Groups.RemoveFromGroupAsync(
             Context.ConnectionId,

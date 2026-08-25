@@ -28,4 +28,6 @@ public static class RealtimeGroups
         $"context:school.message:{conversationId}";
     public static string WarehouseMessage(string conversationId) =>
         $"context:warehouse.message:{conversationId}";
+    public static string HomeServicesMessage(string conversationId) =>
+        $"context:home-services.message:{conversationId}";
 }
