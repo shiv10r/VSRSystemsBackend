@@ -299,6 +299,41 @@ public sealed class RealtimeHub : Hub
             .SendAsync("realtimeEvent", message);
     }
 
+    public async Task SubscribeToMessageRead(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            $"read:{conversationId}",
+            Context.ConnectionAborted);
+    }
+
+    public Task UnsubscribeFromMessageRead(string conversationId) =>
+        Groups.RemoveFromGroupAsync(
+            Context.ConnectionId,
+            $"read:{conversationId}",
+            Context.ConnectionAborted);
+
+    public async Task BroadcastMessageRead(string conversationId, string messageId, string userId)
+    {
+        var message = new
+        {
+            type = "message-read",
+            conversationId,
+            messageId,
+            userId,
+            timestamp = DateTimeOffset.UtcNow
+        };
+        await Clients.Group($"read:{conversationId}")
+            .SendAsync("realtimeEvent", message);
+    }
+
     public async Task SubscribeToPresence(string tenantId)
     {
         var userId = GetUserId();
