@@ -120,6 +120,8 @@ builder.Services.PostConfigure<UploadNotificationOptions>(options =>
     if (string.IsNullOrWhiteSpace(options.RecipientEmail))
         options.RecipientEmail = builder.Configuration["UPLOAD_NOTIFICATION_EMAIL"] ?? string.Empty;
 });
+builder.Services.Configure<FeatureFlagsOptions>(builder.Configuration.GetSection(FeatureFlagsOptions.SectionName));
+builder.Services.Configure<SettingsOptions>(builder.Configuration.GetSection(SettingsOptions.SectionName));
 builder.Services.AddHttpClient<UploadNotificationService>(client =>
 {
     client.BaseAddress = new Uri("https://api.resend.com/");
