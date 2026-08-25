@@ -38,4 +38,6 @@ public static class RealtimeGroups
         $"context:hotel.message:{conversationId}";
     public static string NewsMessage(string conversationId) =>
         $"context:news.message:{conversationId}";
+    public static string JobsMessage(string conversationId) =>
+        $"context:jobs.message:{conversationId}";
 }
