@@ -5,8 +5,9 @@ namespace VSRSystemsBackend.Infrastructure.Platform.Chat;
 
 public sealed class HomeServicesChatContextAuthorizer : IChatContextAuthorizer
 {
+    // Booking IDs are conversation IDs until relational conversation metadata is introduced.
     public const string TenantId = "home-services";
-    public const string ContextType = "home-services.message";
+    public const string ContextType = "home-services.booking";
 
     private readonly IRealtimeSubscriptionAuthorizer _bookingAuthorizer;
 
@@ -21,10 +22,11 @@ public sealed class HomeServicesChatContextAuthorizer : IChatContextAuthorizer
         bool hasAdministrativeAccess,
         CancellationToken cancellationToken = default)
     {
-        // Home Services messages are linked to bookings/professionals
-        // Authorize based on having access to the booking context
-        var isAuthorized = hasAdministrativeAccess
-            || !string.IsNullOrWhiteSpace(userId);
+        var isAuthorized = await _bookingAuthorizer.CanSubscribeToHomeServicesBookingAsync(
+            userId,
+            hasAdministrativeAccess,
+            conversationId,
+            cancellationToken);
 
         return isAuthorized
             ? new AuthorizedChatContext(TenantId, conversationId, ContextType, conversationId)

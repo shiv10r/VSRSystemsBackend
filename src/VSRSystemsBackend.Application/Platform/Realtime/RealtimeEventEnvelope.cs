@@ -14,6 +14,7 @@ public static class RealtimeEventTypes
     public const string HomeServicesBookingStatusChanged = "home-services.booking.status-changed";
     public const string PlatformChatMessageCreated = "platform.chat.message-created";
     public const string PlatformChatTypingIndicator = "platform.chat.typing-indicator";
+    public const string PlatformChatMessageRead = "platform.chat.message-read";
 }
 
 public static class RealtimeGroups

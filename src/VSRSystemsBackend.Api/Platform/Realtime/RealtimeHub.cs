@@ -40,6 +40,7 @@ public sealed class RealtimeHub : Hub
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, RealtimeGroups.Tenant(tenantId));
             await Groups.AddToGroupAsync(Context.ConnectionId, RealtimeGroups.Presence(tenantId));
+            await BroadcastPresenceUpdate(tenantId, userId, true);
         }
 
         _logger.LogInformation("Realtime connection {ConnectionId} established for user {UserId}", Context.ConnectionId, userId);
@@ -250,97 +251,85 @@ public sealed class RealtimeHub : Hub
 
     public async Task SubscribeToTypingIndicators(string conversationId)
     {
-        var userId = GetUserId();
-        if (userId is null)
-        {
-            Context.Abort();
-            return;
-        }
-
+        var context = await AuthorizeChatContextAsync(conversationId);
         await Groups.AddToGroupAsync(
             Context.ConnectionId,
-            $"typing:{conversationId}",
+            RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
             Context.ConnectionAborted);
     }
 
     public async Task SubscribeToTypingIndicator(string conversationId)
     {
-        var userId = GetUserId();
-        if (userId is null)
-        {
-            Context.Abort();
-            return;
-        }
+        await SubscribeToTypingIndicators(conversationId);
+    }
 
-        await Groups.AddToGroupAsync(
+    public async Task UnsubscribeFromTypingIndicators(string conversationId)
+    {
+        var context = await AuthorizeChatContextAsync(conversationId);
+        await Groups.RemoveFromGroupAsync(
             Context.ConnectionId,
-            $"typing:{conversationId}",
+            RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
             Context.ConnectionAborted);
     }
 
-    public Task UnsubscribeFromTypingIndicators(string conversationId) =>
-        Groups.RemoveFromGroupAsync(
-            Context.ConnectionId,
-            $"typing:{conversationId}",
-            Context.ConnectionAborted);
-
-    public async Task BroadcastTypingIndicator(string conversationId, string userId, bool isTyping, string? statusMessage = null)
+    public async Task BroadcastTypingIndicator(string conversationId, bool isTyping)
     {
-        var message = new
-        {
-            type = "typing-indicator",
-            conversationId,
-            userId,
-            isTyping,
-            statusMessage,
-            timestamp = DateTimeOffset.UtcNow
-        };
-        await Clients.Group($"typing:{conversationId}")
-            .SendAsync("realtimeEvent", message);
+        var context = await AuthorizeChatContextAsync(conversationId);
+        var userId = GetUserId() ?? throw new HubException("Authentication is required.");
+        var message = new RealtimeEventEnvelope<object>(
+            Guid.NewGuid(),
+            RealtimeEventTypes.PlatformChatTypingIndicator,
+            1,
+            DateTimeOffset.UtcNow,
+            Context.ConnectionId,
+            context.TenantId,
+            new { conversationId = context.ConversationId, userId, isTyping });
+        await Clients.OthersInGroup(RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId))
+            .SendAsync(RealtimeGroups.ClientMethod, message, Context.ConnectionAborted);
     }
 
     public async Task SubscribeToMessageRead(string conversationId)
     {
-        var userId = GetUserId();
-        if (userId is null)
-        {
-            Context.Abort();
-            return;
-        }
-
+        var context = await AuthorizeChatContextAsync(conversationId);
         await Groups.AddToGroupAsync(
             Context.ConnectionId,
-            $"read:{conversationId}",
+            RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
             Context.ConnectionAborted);
     }
 
-    public Task UnsubscribeFromMessageRead(string conversationId) =>
-        Groups.RemoveFromGroupAsync(
-            Context.ConnectionId,
-            $"read:{conversationId}",
-            Context.ConnectionAborted);
-
-    public async Task BroadcastMessageRead(string conversationId, string messageId, string userId)
+    public async Task UnsubscribeFromMessageRead(string conversationId)
     {
-        var message = new
-        {
-            type = "message-read",
-            conversationId,
-            messageId,
-            userId,
-            timestamp = DateTimeOffset.UtcNow
-        };
-        await Clients.Group($"read:{conversationId}")
-            .SendAsync("realtimeEvent", message);
+        var context = await AuthorizeChatContextAsync(conversationId);
+        await Groups.RemoveFromGroupAsync(
+            Context.ConnectionId,
+            RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId),
+            Context.ConnectionAborted);
+    }
+
+    public async Task BroadcastMessageRead(string conversationId, string messageId)
+    {
+        var context = await AuthorizeChatContextAsync(conversationId);
+        var userId = GetUserId() ?? throw new HubException("Authentication is required.");
+        var message = new RealtimeEventEnvelope<object>(
+            Guid.NewGuid(),
+            RealtimeEventTypes.PlatformChatMessageRead,
+            1,
+            DateTimeOffset.UtcNow,
+            Context.ConnectionId,
+            context.TenantId,
+            new { conversationId = context.ConversationId, messageId, userId });
+        await Clients.OthersInGroup(RealtimeGroups.ChatConversation(context.TenantId, context.ConversationId))
+            .SendAsync(RealtimeGroups.ClientMethod, message, Context.ConnectionAborted);
     }
 
     public async Task SubscribeToPresence(string tenantId)
     {
         var userId = GetUserId();
-        if (userId is null)
+        var authenticatedTenantId = Context.User?.FindFirst("tenant_id")?.Value;
+        if (userId is null || string.IsNullOrWhiteSpace(authenticatedTenantId)
+            || !string.Equals(tenantId, authenticatedTenantId, StringComparison.Ordinal))
         {
-            Context.Abort();
-            return;
+            throw new HubException("You are not authorized to subscribe to this presence group.");
         }
 
         await Groups.AddToGroupAsync(
@@ -355,7 +344,7 @@ public sealed class RealtimeHub : Hub
             RealtimeGroups.Presence(tenantId),
             Context.ConnectionAborted);
 
-    public async Task BroadcastPresenceUpdate(string tenantId, string userId, bool isOnline, string? statusMessage = null)
+    private async Task BroadcastPresenceUpdate(string tenantId, string userId, bool isOnline, string? statusMessage = null)
     {
         var message = new
         {
