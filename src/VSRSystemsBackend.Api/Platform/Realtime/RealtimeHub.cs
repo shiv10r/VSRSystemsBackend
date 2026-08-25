@@ -263,6 +263,21 @@ public sealed class RealtimeHub : Hub
             Context.ConnectionAborted);
     }
 
+    public async Task SubscribeToTypingIndicator(string conversationId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            Context.Abort();
+            return;
+        }
+
+        await Groups.AddToGroupAsync(
+            Context.ConnectionId,
+            $"typing:{conversationId}",
+            Context.ConnectionAborted);
+    }
+
     public Task UnsubscribeFromTypingIndicators(string conversationId) =>
         Groups.RemoveFromGroupAsync(
             Context.ConnectionId,
