@@ -26,4 +26,6 @@ public static class RealtimeGroups
         $"context:chat.conversation:{tenantId}:{conversationId}";
     public static string SchoolMessage(string conversationId) =>
         $"context:school.message:{conversationId}";
+    public static string WarehouseMessage(string conversationId) =>
+        $"context:warehouse.message:{conversationId}";
 }
