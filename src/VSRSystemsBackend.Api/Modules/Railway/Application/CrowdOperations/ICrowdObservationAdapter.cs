@@ -1,6 +1,6 @@
-using VSRSystemsBackend.Api.Domain.CrowdOperations;
+using VSRSystemsBackend.Api.Modules.Railway.Domain.CrowdOperations;
 
-namespace VSRSystemsBackend.Api.Application.CrowdOperations
+namespace VSRSystemsBackend.Api.Modules.Railway.Application.CrowdOperations
 {
     /// <summary>
     /// One stable adapter interface for approved gate, CCTV-analytics,

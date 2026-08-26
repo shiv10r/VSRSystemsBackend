@@ -554,6 +554,459 @@
         }
       }
     },
+    "/api/railway/master-data/assets": {
+      "get": {
+        "tags": [
+          "RailwayMasterData"
+        ],
+        "operationId": "railway.railwaymasterdata.listassets",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.AssetSummary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.AssetSummary"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.AssetSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/railway/master-data/routes": {
+      "get": {
+        "tags": [
+          "RailwayMasterData"
+        ],
+        "operationId": "railway.railwaymasterdata.listroutes",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.RouteSummary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.RouteSummary"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.RouteSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/railway/master-data/stations": {
+      "get": {
+        "tags": [
+          "RailwayMasterData"
+        ],
+        "operationId": "railway.railwaymasterdata.liststations",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.StationSummary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.StationSummary"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.StationSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/railway/master-data/types/{kind}": {
+      "get": {
+        "tags": [
+          "RailwayMasterData"
+        ],
+        "operationId": "railway.railwaymasterdata.list",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "RailwayMasterData"
+        ],
+        "operationId": "railway.railwaymasterdata.create",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.API.Contracts.CreateRailwayMasterRecordRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.API.Contracts.CreateRailwayMasterRecordRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.API.Contracts.CreateRailwayMasterRecordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/railway/timetable-services": {
+      "get": {
+        "tags": [
+          "RailwayMasterData"
+        ],
+        "operationId": "railway.railwaymasterdata.listtimetableservices",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/railway/master-data/types/{kind}/{id}": {
+      "put": {
+        "tags": [
+          "RailwayMasterData"
+        ],
+        "operationId": "railway.railwaymasterdata.update",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.API.Contracts.UpdateRailwayMasterRecordRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.API.Contracts.UpdateRailwayMasterRecordRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.API.Contracts.UpdateRailwayMasterRecordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "RailwayMasterData"
+        ],
+        "operationId": "railway.railwaymasterdata.retire",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/railway/work-orders": {
       "get": {
         "tags": [
@@ -742,6 +1195,106 @@
         },
         "additionalProperties": false
       },
+      "RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.AssetSummary": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.Application.Shared.AssetSummary"
+            },
+            "nullable": true
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary"
+            },
+            "nullable": true
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.RouteSummary": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.Application.Shared.RouteSummary"
+            },
+            "nullable": true
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RailwayPageOfVSRSystemsBackend.Api.Modules.Railway.Application.Shared.StationSummary": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.Application.Shared.StationSummary"
+            },
+            "nullable": true
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "ResolveDefectRequest": {
         "type": "object",
         "properties": {
@@ -778,6 +1331,108 @@
         ],
         "type": "integer",
         "format": "int32"
+      },
+      "VSRSystemsBackend.Api.Modules.Railway.API.Contracts.CreateRailwayMasterRecordRequest": {
+        "type": "object",
+        "properties": {
+          "divisionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "secondaryParentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "tertiaryParentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "departureWindowStart": {
+            "type": "string",
+            "format": "time",
+            "nullable": true
+          },
+          "departureWindowEnd": {
+            "type": "string",
+            "format": "time",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "criticality": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "geometry": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VSRSystemsBackend.Api.Modules.Railway.API.Contracts.RailwayCoordinate"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VSRSystemsBackend.Api.Modules.Railway.API.Contracts.RailwayCoordinate": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VSRSystemsBackend.Api.Modules.Railway.API.Contracts.UpdateRailwayMasterRecordRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "VSRSystemsBackend.Api.Modules.Railway.API.Controllers.CompleteRequest": {
         "type": "object",
@@ -890,6 +1545,84 @@
         },
         "additionalProperties": false
       },
+      "VSRSystemsBackend.Api.Modules.Railway.Application.Shared.AssetSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "divisionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assetTypeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "criticality": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VSRSystemsBackend.Api.Modules.Railway.Application.Shared.MasterRecordSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "divisionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "kind": {
+            "type": "string",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "retiredAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
       "VSRSystemsBackend.Api.Modules.Railway.Application.Shared.RailwayCapabilities": {
         "type": "object",
         "properties": {
@@ -925,6 +1658,80 @@
               "type": "string"
             },
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VSRSystemsBackend.Api.Modules.Railway.Application.Shared.RouteSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "divisionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "corridorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VSRSystemsBackend.Api.Modules.Railway.Application.Shared.StationSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "divisionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
           }
         },
         "additionalProperties": false

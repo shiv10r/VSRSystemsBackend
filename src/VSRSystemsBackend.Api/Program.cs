@@ -46,7 +46,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "VSR Systems Backend API", Version = "v1" });
-    c.CustomSchemaIds(type => type.FullName?.Replace('+', '.') ?? type.Name);
+    c.CustomSchemaIds(Program.GetSwaggerSchemaId);
     c.CustomOperationIds(apiDescription =>
     {
         if (!apiDescription.RelativePath?.StartsWith("api/railway", StringComparison.OrdinalIgnoreCase) ?? true)
@@ -439,4 +439,14 @@ using (var scope = app.Services.CreateScope())
 
 app.Run();
 
-public partial class Program { }
+public partial class Program
+{
+    internal static string GetSwaggerSchemaId(Type type)
+    {
+        if (!type.IsGenericType)
+            return type.FullName?.Replace('+', '.') ?? type.Name;
+
+        var typeName = type.Name[..type.Name.IndexOf('`')];
+        return $"{typeName}Of{string.Join("And", type.GenericTypeArguments.Select(GetSwaggerSchemaId))}";
+    }
+}

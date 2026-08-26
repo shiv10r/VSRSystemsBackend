@@ -1,5 +1,5 @@
-using VSRSystemsBackend.Api.Domain.CrowdOperations;
-using VSRSystemsBackend.Api.Domain.Inspection.Enums;
+using VSRSystemsBackend.Api.Modules.Railway.Domain.CrowdOperations;
+using VSRSystemsBackend.Api.Modules.Railway.Domain.Inspection;
 
 namespace VSRSystemsBackend.Api.Application.Shared
 {

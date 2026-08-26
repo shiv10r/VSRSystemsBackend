@@ -1,35 +1,54 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VSRSystemsBackend.Api.Application.CrowdOperations;
-using VSRSystemsBackend.Api.Domain.CrowdOperations;
+using Microsoft.EntityFrameworkCore;
+using VSRSystemsBackend.Api.Modules.Railway.Application.Shared;
+using VSRSystemsBackend.Api.Modules.Railway.Infrastructure.Ingestion;
+using VSRSystemsBackend.Api.Modules.Railway.Infrastructure.Persistence;
 
-namespace VSRSystemsBackend.Api.Modules.Railway.API.Controllers.Crowd
+namespace VSRSystemsBackend.Api.Modules.Railway.API.Controllers.Crowd;
+
+/// <summary>Machine-to-machine aggregate ingestion authenticated independently from user JWTs.</summary>
+[ApiController]
+[Route("api/railway/crowd/ingestion")]
+public sealed class RailwayCrowdIngestionController(
+    CrowdIngestionService ingestionService,
+    RailwayDbContext dbContext,
+    IRailwayScopeAccessor scopeAccessor) : ControllerBase
 {
-    /// <summary>
-    /// Machine-to-machine ingestion endpoint. Source credentials are
-    /// authenticated independently from user JWTs via HMAC signature.
-    /// </summary>
-    [ApiController]
-    [Route("api/railway/crowd/ingestion")]
-    public class RailwayCrowdIngestionController : ControllerBase
+    [HttpPost("batches", Name = "railway.crowd.ingestion.batch")]
+    [RequestSizeLimit(2_000_000)]
+    public async Task<IActionResult> IngestBatch(
+        [FromHeader(Name = "X-Railway-Source-Id")] Guid sourceId,
+        [FromHeader(Name = "X-Railway-Timestamp")] long timestamp,
+        [FromHeader(Name = "X-Railway-Nonce")] string nonce,
+        [FromHeader(Name = "X-Railway-Signature")] string signature,
+        CancellationToken cancellationToken)
     {
-        [HttpPost("batches")]
-        public IActionResult IngestBatch([FromBody] IngestBatchRequest request)
-        {
-            // Full implementation: verify HMAC signature, timestamp freshness,
-            // nonce replay, source state, owner scope. Quarantine malformed batches
-            // with redacted payload metadata. Idempotent by SourceEventId.
-            return Accepted(new { accepted = 0, quarantined = 0 });
-        }
-
-        [HttpGet("quarantine")]
-        public IActionResult Quarantine() => Ok(Array.Empty<object>());
+        if (sourceId == Guid.Empty || timestamp <= 0 || string.IsNullOrWhiteSpace(nonce) || string.IsNullOrWhiteSpace(signature))
+            return BadRequest(new { code = "missing_authentication_headers" });
+        await using var stream = new MemoryStream();
+        await Request.Body.CopyToAsync(stream, cancellationToken);
+        var result = await ingestionService.IngestAsync(sourceId, DateTimeOffset.FromUnixTimeSeconds(timestamp), nonce,
+            signature, stream.ToArray(), cancellationToken);
+        if (result.Accepted) return Accepted(new { accepted = result.AcceptedCount, duplicates = result.DuplicateCount });
+        if (result.FailureCode == "replayed_nonce") return Conflict(new { code = result.FailureCode });
+        if (result.FailureCode is "invalid_signature" or "expired_timestamp" or "source_disabled" or "source_not_found")
+            return Unauthorized(new { code = "source_authentication_failed" });
+        return BadRequest(new { code = result.FailureCode });
     }
 
-    public class IngestBatchRequest
+    [Authorize]
+    [HttpGet("quarantine", Name = "railway.crowd.ingestion.quarantine")]
+    public async Task<IActionResult> Quarantine(CancellationToken cancellationToken)
     {
-        public Guid SourceId { get; set; }
-        public string Nonce { get; set; } = "";
-        public string Signature { get; set; } = "";
-        public List<ObservationRequest> Observations { get; set; } = new();
+        var scope = scopeAccessor.GetRequiredScope();
+        scope.RequirePermission("railway.crowd.manage");
+        var items = await dbContext.CrowdQuarantine.AsNoTracking()
+            .Where(item => item.DivisionId == null || scope.DivisionIds.Contains(item.DivisionId.Value))
+            .OrderByDescending(item => item.CreatedAt)
+            .Take(100)
+            .Select(item => new { item.Id, item.SourceId, item.Reason, item.PayloadHash, item.CreatedAt })
+            .ToArrayAsync(cancellationToken);
+        return Ok(items);
     }
 }
