@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using VSRSystemsBackend.Api.Modules.Railway.Application.Shared;
 using VSRSystemsBackend.Api.Modules.Railway.Infrastructure.Ingestion;
 using VSRSystemsBackend.Api.Modules.Railway.Infrastructure.Persistence;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace VSRSystemsBackend.Api.Modules.Railway.API.Controllers.Crowd;
 
@@ -16,6 +17,7 @@ public sealed class RailwayCrowdIngestionController(
     IRailwayScopeAccessor scopeAccessor) : ControllerBase
 {
     [HttpPost("batches", Name = "railway.crowd.ingestion.batch")]
+    [EnableRateLimiting("railway-ingestion")]
     [RequestSizeLimit(2_000_000)]
     public async Task<IActionResult> IngestBatch(
         [FromHeader(Name = "X-Railway-Source-Id")] Guid sourceId,

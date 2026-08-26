@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using VSRSystemsBackend.Api.Modules.Railway.Application.CrowdOperations;
 using VSRSystemsBackend.Api.Modules.Railway.Domain.CrowdOperations;
 using VSRSystemsBackend.Api.Modules.Railway.Infrastructure.Persistence;
+using VSRSystemsBackend.Api.Modules.Railway.Infrastructure;
 
 namespace VSRSystemsBackend.Api.Modules.Railway.Infrastructure.Ingestion;
 
@@ -18,12 +19,13 @@ public sealed class CrowdIngestionService(
         string signature, byte[] body, CancellationToken cancellationToken)
     {
         var source = await dbContext.CrowdSources.IgnoreQueryFilters().SingleOrDefaultAsync(item => item.Id == sourceId, cancellationToken);
-        if (source is null) return new(false, 0, 0, "source_not_found");
+        if (source is null) { RailwayTelemetry.IngestionRejected.Add(1); return new(false, 0, 0, "source_not_found"); }
 
         var authentication = authenticator.Authenticate(source, timestamp, nonce, signature, body, DateTimeOffset.UtcNow);
         if (!authentication.Succeeded)
         {
             await QuarantineAsync(source, authentication.FailureCode!, body, cancellationToken);
+            RailwayTelemetry.IngestionRejected.Add(1);
             return new(false, 0, 0, authentication.FailureCode);
         }
         if (await dbContext.CrowdIngestionNonces.AnyAsync(item => item.SourceId == sourceId && item.Nonce == nonce, cancellationToken))
@@ -67,6 +69,7 @@ public sealed class CrowdIngestionService(
         dbContext.CrowdIngestionNonces.Add(new CrowdIngestionNonce(source.Id, nonce, DateTimeOffset.UtcNow));
         source.RecordObservation(normalized.Max(item => item.WindowEnd));
         await dbContext.SaveChangesAsync(cancellationToken);
+        RailwayTelemetry.IngestionAccepted.Add(accepted);
         return new(true, accepted, duplicates);
     }
 

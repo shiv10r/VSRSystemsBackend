@@ -27,6 +27,9 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using VSRSystemsBackend.Api.Modules.Railway.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,7 +84,8 @@ var openTelemetry = builder.Services
     .WithMetrics(metrics => metrics
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
-        .AddRuntimeInstrumentation());
+        .AddRuntimeInstrumentation()
+        .AddMeter(RailwayTelemetry.MeterName));
 
 if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
 {
@@ -94,6 +98,10 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOIN
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddRailwayModule(builder.Configuration);
+builder.Services.AddRateLimiter(options => options.AddPolicy("railway-ingestion", context =>
+    RateLimitPartition.GetFixedWindowLimiter(
+        context.Request.Headers["X-Railway-Source-Id"].FirstOrDefault() ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 120, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 })));
 
 // MongoDB is optional and isolated from PostgreSQL-backed modules.
 var mongoSection = builder.Configuration.GetSection(MongoDbOptions.SectionName);
@@ -350,6 +358,7 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseCors("AllowFrontend");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseSerilogRequestLogging();
@@ -375,6 +384,8 @@ app.MapHealthChecks("/health", new HealthCheckOptions
         });
     }
 });
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 
 // Ensure database is created (skip seeder in production to save memory)
 using (var scope = app.Services.CreateScope())

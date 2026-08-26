@@ -4,6 +4,8 @@ using VSRSystemsBackend.Api.Modules.Railway.Application.Shared;
 using VSRSystemsBackend.Api.Modules.Railway.Domain.CrowdOperations;
 using VSRSystemsBackend.Api.Modules.Railway.Infrastructure.Ingestion;
 using VSRSystemsBackend.Api.Modules.Railway.Infrastructure.Persistence;
+using VSRSystemsBackend.Api.Modules.Railway.Application.Maintenance;
+using VSRSystemsBackend.Api.Modules.Railway.Domain.Maintenance;
 
 namespace VSRSystemsBackend.Api.Modules.Railway.Application.CrowdOperations;
 
@@ -13,7 +15,7 @@ public sealed record SubmitCrowdObservationCommand(Guid DivisionId, Guid SourceI
     DateTimeOffset WindowStart, DateTimeOffset WindowEnd, int Count, int? Inflow, int? Outflow,
     decimal Confidence, IReadOnlySet<string> QualityFlags);
 
-public sealed class CrowdHandlers(RailwayDbContext dbContext, ICrowdSourceSecretProtector secretProtector)
+public sealed class CrowdHandlers(RailwayDbContext dbContext, ICrowdSourceSecretProtector secretProtector, MaintenanceHandlers maintenanceHandlers)
 {
     public async Task<CrowdSourceCredential> CreateSourceAsync(RailwayScope scope, CreateCrowdSourceCommand command,
         CancellationToken cancellationToken)
@@ -84,5 +86,23 @@ public sealed class CrowdHandlers(RailwayDbContext dbContext, ICrowdSourceSecret
         dbContext.CrowdIncidents.Add(incident);
         await dbContext.SaveChangesAsync(cancellationToken);
         return incident;
+    }
+
+    public async Task RecordIncidentResponseAsync(RailwayScope scope, Guid incidentId, string action, CancellationToken cancellationToken)
+    {
+        scope.RequirePermission("railway.crowd.manage"); var incident = await dbContext.CrowdIncidents.SingleAsync(item => item.Id == incidentId, cancellationToken);
+        scope.RequireDivision(incident.DivisionId!.Value); incident.RecordResponse(action, scope.UserId, DateTimeOffset.UtcNow); await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task CloseIncidentAsync(RailwayScope scope, Guid incidentId, CancellationToken cancellationToken)
+    {
+        scope.RequirePermission("railway.crowd.manage"); var incident = await dbContext.CrowdIncidents.SingleAsync(item => item.Id == incidentId, cancellationToken);
+        scope.RequireDivision(incident.DivisionId!.Value); incident.Close(scope.UserId, DateTimeOffset.UtcNow); await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<WorkOrder> CreateIncidentWorkOrderAsync(RailwayScope scope, Guid incidentId, WorkOrderPriority priority, CancellationToken cancellationToken)
+    {
+        var incident = await dbContext.CrowdIncidents.AsNoTracking().SingleAsync(item => item.Id == incidentId, cancellationToken);
+        return await maintenanceHandlers.CreateAsync(scope, incident.DivisionId!.Value, incident.Id, "CrowdIncident", incident.StationId, priority, false, cancellationToken);
     }
 }

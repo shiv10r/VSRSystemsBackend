@@ -62,6 +62,7 @@ public sealed class CrowdIncidentConfiguration : IEntityTypeConfiguration<CrowdI
         builder.ToTable("CrowdIncidents", "railway"); builder.HasKey(item => item.Id);
         builder.Property(item => item.Title).HasMaxLength(300).IsRequired();
         builder.Property(item => item.Status).HasMaxLength(32).IsRequired();
+        builder.Property(item => item.ResponseLog).HasMaxLength(12000);
         builder.Property(item => item.Version).IsConcurrencyToken();
         builder.HasIndex(item => new { item.OrganizationId, item.StationId, item.Status });
     }

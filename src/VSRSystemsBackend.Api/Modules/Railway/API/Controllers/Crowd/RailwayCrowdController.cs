@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using VSRSystemsBackend.Api.Modules.Railway.Application.CrowdOperations;
 using VSRSystemsBackend.Api.Modules.Railway.Application.Shared;
 using VSRSystemsBackend.Api.Modules.Railway.Infrastructure.Persistence;
+using VSRSystemsBackend.Api.Modules.Railway.Domain.Maintenance;
 
 namespace VSRSystemsBackend.Api.Modules.Railway.API.Controllers.Crowd;
 
@@ -86,7 +87,7 @@ public sealed class RailwayCrowdController(
         return Ok(await dbContext.CrowdIncidents.AsNoTracking()
             .Where(item => item.DivisionId != null && scope.DivisionIds.Contains(item.DivisionId.Value))
             .OrderByDescending(item => item.OpenedAt).Select(item => new
-            { item.Id, item.DivisionId, item.StationId, item.Title, item.Status, item.OpenedAt, item.Version })
+            { item.Id, item.DivisionId, item.StationId, item.Title, item.Status, item.OpenedAt, item.ResponseLog, item.ClosedAt, item.Version })
             .ToArrayAsync(cancellationToken));
     }
 
@@ -96,9 +97,23 @@ public sealed class RailwayCrowdController(
         var incident = await handlers.OpenIncidentAsync(scopeAccessor.GetRequiredScope(), request.DivisionId, request.StationId, request.Title, cancellationToken);
         return CreatedAtAction(nameof(Incidents), new { }, new { incident.Id });
     }
+
+    [HttpPost("incidents/{incidentId:guid}/responses", Name = "railway.crowd.incidents.respond")]
+    public async Task<IActionResult> RecordResponse(Guid incidentId, IncidentResponseRequest request, CancellationToken cancellationToken)
+    { await handlers.RecordIncidentResponseAsync(scopeAccessor.GetRequiredScope(), incidentId, request.Action, cancellationToken); return NoContent(); }
+
+    [HttpPost("incidents/{incidentId:guid}/close", Name = "railway.crowd.incidents.close")]
+    public async Task<IActionResult> CloseIncident(Guid incidentId, CancellationToken cancellationToken)
+    { await handlers.CloseIncidentAsync(scopeAccessor.GetRequiredScope(), incidentId, cancellationToken); return NoContent(); }
+
+    [HttpPost("incidents/{incidentId:guid}/work-order", Name = "railway.crowd.incidents.work-order")]
+    public async Task<IActionResult> CreateIncidentWorkOrder(Guid incidentId, IncidentWorkOrderRequest request, CancellationToken cancellationToken)
+    { var order = await handlers.CreateIncidentWorkOrderAsync(scopeAccessor.GetRequiredScope(), incidentId, request.Priority, cancellationToken); return Ok(new { workOrderId = order.Id }); }
 }
 
 public sealed record ObservationRequest(Guid DivisionId, Guid SourceId, string SourceEventId, DateTimeOffset WindowStart,
     DateTimeOffset WindowEnd, int Count, int? Inflow, int? Outflow, decimal Confidence, IReadOnlyList<string> QualityFlags);
 public sealed record CreateSourceRequest(Guid DivisionId, Guid StationId, Guid StationZoneId, string Name, string AdapterType);
 public sealed record IncidentRequest(Guid DivisionId, Guid StationId, string Title);
+public sealed record IncidentResponseRequest(string Action);
+public sealed record IncidentWorkOrderRequest(WorkOrderPriority Priority);

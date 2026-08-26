@@ -133,6 +133,19 @@ public sealed class CrowdIncident : RailwayEntity
     public string Status { get; private set; } = "Open";
     public Guid OpenedBy { get; private set; }
     public DateTimeOffset OpenedAt { get; private set; }
+    public string ResponseLog { get; private set; } = string.Empty;
+    public DateTimeOffset? ClosedAt { get; private set; }
+    public Guid? ClosedBy { get; private set; }
+    public void RecordResponse(string action, Guid actor, DateTimeOffset now)
+    {
+        if (Status != "Open" || string.IsNullOrWhiteSpace(action)) throw new InvalidOperationException("Response action is invalid.");
+        ResponseLog += $"{now:O}|{actor}|{action.Trim()}\n"; Version++;
+    }
+    public void Close(Guid actor, DateTimeOffset now)
+    {
+        if (Status != "Open") throw new InvalidOperationException("Incident is already closed.");
+        Status = "Closed"; ClosedBy = actor; ClosedAt = now; Version++;
+    }
 }
 
 public sealed class CrowdIngestionNonce

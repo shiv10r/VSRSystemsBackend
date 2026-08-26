@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using VSRSystemsBackend.Api.Modules.Railway.Infrastructure.Persistence;
 using VSRSystemsBackend.Api.Platform.Outbox;
+using VSRSystemsBackend.Api.Modules.Railway.Infrastructure;
 
 namespace VSRSystemsBackend.Api.Modules.Railway.Infrastructure.BackgroundJobs;
 
@@ -20,8 +21,8 @@ public sealed class RailwayOutboxDispatcher(IServiceScopeFactory scopeFactory, I
             foreach (var message in messages)
             {
                 message.Lease(now.AddMinutes(1)); await db.SaveChangesAsync(stoppingToken);
-                try { await sink.PublishAsync(message, stoppingToken); message.MarkDispatched(DateTimeOffset.UtcNow); }
-                catch (Exception exception) { message.MarkFailed(exception.Message, DateTimeOffset.UtcNow); logger.LogError(exception, "Railway outbox dispatch failed for {EventId}", message.Id); }
+                try { await sink.PublishAsync(message, stoppingToken); message.MarkDispatched(DateTimeOffset.UtcNow); RailwayTelemetry.OutboxDispatched.Add(1); }
+                catch (Exception exception) { message.MarkFailed(exception.Message, DateTimeOffset.UtcNow); RailwayTelemetry.OutboxFailed.Add(1); logger.LogError(exception, "Railway outbox dispatch failed for {EventId}", message.Id); }
                 await db.SaveChangesAsync(stoppingToken);
             }
         }

@@ -38,6 +38,12 @@ public static class RailwayModule
         services.AddScoped<IRailwayOfflineCommandHandler, SaveInspectionAnswerOfflineHandler>();
         services.AddScoped<IRailwayOfflineCommandHandler, SubmitInspectionOfflineHandler>();
         services.AddScoped<MaintenanceHandlers>();
+        services.AddScoped<IRailwayOfflineCommandHandler, StartWorkOfflineHandler>();
+        services.AddScoped<IRailwayOfflineCommandHandler, CompleteWorkTaskOfflineHandler>();
+        services.AddScoped<IRailwayOfflineCommandHandler, AttachWorkPermitOfflineHandler>();
+        services.AddScoped<IRailwayOfflineCommandHandler, BlockWorkOfflineHandler>();
+        services.AddScoped<IRailwayOfflineCommandHandler, UnblockWorkOfflineHandler>();
+        services.AddScoped<IRailwayOfflineCommandHandler, SubmitWorkVerificationOfflineHandler>();
         services.AddScoped<CrowdHandlers>();
         services.AddDataProtection();
         services.AddScoped<ICrowdSourceSecretProtector, CrowdSourceSecretProtector>();
@@ -50,6 +56,7 @@ public static class RailwayModule
         services.AddHostedService<MaintenanceScheduleWorker>();
         services.AddSingleton<IRailwayIntegrationEventSink, RailwayIntegrationEventLogSink>();
         services.AddHostedService<RailwayOutboxDispatcher>();
+        services.AddHealthChecks().AddCheck<RailwayReadinessHealthCheck>("railway", tags: ["ready", "railway"]);
         services.AddDbContext<RailwayDbContext>(options =>
             options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection"),
