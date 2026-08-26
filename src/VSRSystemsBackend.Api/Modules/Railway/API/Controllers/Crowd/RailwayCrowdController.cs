@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VSRSystemsBackend.Api.Domain.CrowdOperations;
 
 namespace VSRSystemsBackend.Api.Modules.Railway.API.Controllers.Crowd
 {
     [ApiController]
+    [Authorize]
     [Route("api/railway/crowd")]
     public class RailwayCrowdController : ControllerBase
     {

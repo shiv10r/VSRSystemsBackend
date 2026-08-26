@@ -22,9 +22,11 @@ using VSRSystemsBackend.Api.Platform.Realtime;
 using VSRSystemsBackend.Api.Platform.Storage;
 using VSRSystemsBackend.Api.Platform.Settings;
 using VSRSystemsBackend.Api.Platform.Weather;
+using VSRSystemsBackend.Api.Modules.Railway;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,6 +47,29 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "VSR Systems Backend API", Version = "v1" });
     c.CustomSchemaIds(type => type.FullName?.Replace('+', '.') ?? type.Name);
+    c.CustomOperationIds(apiDescription =>
+    {
+        if (!apiDescription.RelativePath?.StartsWith("api/railway", StringComparison.OrdinalIgnoreCase) ?? true)
+            return null;
+
+        var controller = apiDescription.ActionDescriptor.RouteValues["controller"] ?? "endpoint";
+        var action = apiDescription.ActionDescriptor.RouteValues["action"] ?? apiDescription.HttpMethod ?? "operation";
+        return $"railway.{controller}.{action}".ToLowerInvariant();
+    });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "opaque",
+        Description = "VSR authenticated bearer session token.",
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecurityScheme
+        {
+            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
+        }] = Array.Empty<string>(),
+    });
 });
 
 var openTelemetry = builder.Services
@@ -68,6 +93,7 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOIN
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddRailwayModule(builder.Configuration);
 
 // MongoDB is optional and isolated from PostgreSQL-backed modules.
 var mongoSection = builder.Configuration.GetSection(MongoDbOptions.SectionName);
@@ -328,6 +354,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseSerilogRequestLogging();
 app.MapControllers();
+app.MapRailwayEndpoints();
 app.MapRealtime();
 app.MapGet("/", () => Results.Ok(new { service = "VSR Systems Backend API", status = "healthy" }));
 app.MapHealthChecks("/health", new HealthCheckOptions
@@ -411,3 +438,5 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+public partial class Program { }

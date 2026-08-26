@@ -1,21 +1,25 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VSRSystemsBackend.Api.Domain.Inspection;
 using VSRSystemsBackend.Api.Domain.Inspection.Enums;
+using VSRSystemsBackend.Api.Modules.Railway.Application.Shared;
 
 [ApiController]
+[Authorize]
 [Route("api/railway/inspections")]
-public class RailwayInspectionsController : ControllerBase
+public class RailwayInspectionsController(IRailwayScopeAccessor scopeAccessor) : ControllerBase
 {
     [HttpPost("template/{templateVersion}/station/{stationId}")]
-    public IActionResult CreateRun(string templateVersion, Guid stationId, [FromQuery] Guid organizationId, [FromQuery] Guid divisionId)
+    public IActionResult CreateRun(string templateVersion, Guid stationId, [FromBody] CreateInspectionRunRequest request)
     {
-        return Ok(new { templateVersion, stationId, organizationId, divisionId });
+        var scope = scopeAccessor.GetRequiredScope();
+        scope.RequireDivision(request.DivisionId);
+        return Ok(new { templateVersion, stationId, scope.OrganizationId, request.DivisionId });
     }
 
     [HttpPost("{runId}/findings")]
-    public IActionResult SubmitFinding(Guid runId, [FromBody] string itemId, [FromBody] string response)
+    public IActionResult SubmitFinding(Guid runId, [FromBody] SubmitFindingRequest request)
     {
-        return Ok(new { runId, itemId, response });
+        return Ok(new { runId, request.ItemId, request.Response });
     }
 
     [HttpPost("{runId}/defects")]
@@ -30,3 +34,6 @@ public class RailwayInspectionsController : ControllerBase
         public DefectSeverity Severity { get; set; }
     }
 }
+
+public sealed record CreateInspectionRunRequest(Guid DivisionId);
+public sealed record SubmitFindingRequest(string ItemId, string Response);

@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace VSRSystemsBackend.Api.Modules.Railway.API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/railway/work-orders")]
     public class RailwayWorkOrdersController : ControllerBase
     {
@@ -20,6 +22,7 @@ namespace VSRSystemsBackend.Api.Modules.Railway.API.Controllers
     }
 
     [ApiController]
+    [Authorize]
     [Route("api/railway/maintenance/plans")]
     public class RailwayMaintenancePlansController : ControllerBase
     {
