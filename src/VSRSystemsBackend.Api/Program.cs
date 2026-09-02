@@ -12,6 +12,7 @@ using VSRSystemsBackend.Infrastructure.Persistence;
 using VSRSystemsBackend.Infrastructure.Persistence.Mongo;
 using VSRSystemsBackend.Infrastructure.Data.Seeds;
 using VSRSystemsBackend.Api.Infrastructure.Authentication;
+using VSRSystemsBackend.Api.Infrastructure.Configuration;
 using VSRSystemsBackend.Api.Infrastructure.Observability;
 using VSRSystemsBackend.Api.Platform.Chat;
 using VSRSystemsBackend.Api.Platform.FeatureFlags;
@@ -66,8 +67,9 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOIN
 }
 
 // Database
+var databaseConnectionString = DatabaseConnectionString.Resolve(builder.Configuration);
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(databaseConnectionString));
 
 // MongoDB is optional and isolated from PostgreSQL-backed modules.
 var mongoSection = builder.Configuration.GetSection(MongoDbOptions.SectionName);
