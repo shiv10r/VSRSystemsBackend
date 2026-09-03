@@ -18,9 +18,16 @@ public static class DatabaseConnectionString
             return connectionString;
         }
 
+        databaseUrl = configuration["SUPABASE_CONNECTION_STRING"];
+        if (TryConvertDatabaseUrl(databaseUrl, out connectionString))
+        {
+            return connectionString;
+        }
+
         throw new InvalidOperationException(
             "Database configuration is invalid. Set ConnectionStrings__DefaultConnection " +
-            "to a PostgreSQL connection string with a Host, or set DATABASE_URL to a valid PostgreSQL URL.");
+            "to a PostgreSQL connection string with a Host, or set SUPABASE_CONNECTION_STRING " +
+            "or DATABASE_URL to a valid PostgreSQL URL.");
     }
 
     private static bool HasHost(string? connectionString)
@@ -43,8 +50,7 @@ public static class DatabaseConnectionString
     private static bool TryConvertDatabaseUrl(string? databaseUrl, out string connectionString)
     {
         connectionString = string.Empty;
-        if (!Uri.TryCreate(databaseUrl, UriKind.Absolute, out var uri) ||
-            (uri.Scheme != "postgres" && uri.Scheme != "postgresql") ||
+        if (!TryCreateDatabaseUri(databaseUrl, out var uri) ||
             string.IsNullOrWhiteSpace(uri.Host))
         {
             return false;
@@ -82,6 +88,44 @@ public static class DatabaseConnectionString
 
         connectionString = builder.ConnectionString;
         return true;
+    }
+
+    private static bool TryCreateDatabaseUri(string? databaseUrl, out Uri uri)
+    {
+        uri = null!;
+        if (string.IsNullOrWhiteSpace(databaseUrl))
+        {
+            return false;
+        }
+
+        var schemeEnd = databaseUrl.IndexOf("://", StringComparison.Ordinal);
+        var userInfoStart = schemeEnd + 3;
+        var pathStart = databaseUrl.IndexOf('/', userInfoStart);
+        var queryStart = databaseUrl.IndexOf('?', userInfoStart);
+        var authorityEnd = new[] { pathStart, queryStart }
+            .Where(index => index >= 0)
+            .DefaultIfEmpty(databaseUrl.Length)
+            .Min();
+        var userInfoEnd = databaseUrl[..authorityEnd].LastIndexOf('@');
+        var passwordSeparator = databaseUrl.IndexOf(':', userInfoStart);
+        if (schemeEnd <= 0 || passwordSeparator < userInfoStart || userInfoEnd <= passwordSeparator)
+        {
+            return false;
+        }
+
+        var scheme = databaseUrl[..schemeEnd];
+        if (!scheme.Equals("postgres", StringComparison.OrdinalIgnoreCase) &&
+            !scheme.Equals("postgresql", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var username = databaseUrl[userInfoStart..passwordSeparator];
+        var password = databaseUrl[(passwordSeparator + 1)..userInfoEnd];
+        var normalizedUrl = $"{scheme}://{Uri.EscapeDataString(Uri.UnescapeDataString(username))}:" +
+                            $"{Uri.EscapeDataString(Uri.UnescapeDataString(password))}{databaseUrl[userInfoEnd..]}";
+
+        return Uri.TryCreate(normalizedUrl, UriKind.Absolute, out uri!);
     }
 
     private static bool TryParseSslMode(string value, out SslMode sslMode)

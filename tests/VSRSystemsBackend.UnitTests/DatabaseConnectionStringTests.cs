@@ -44,6 +44,84 @@ public class DatabaseConnectionStringTests
     }
 
     [Fact]
+    public void Resolve_UsesExistingRenderSupabaseConnectionString()
+    {
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["SUPABASE_CONNECTION_STRING"] =
+                "postgresql://postgres.project:p%40ssword@supabase-pooler.example.com:5432/postgres?sslmode=require"
+        });
+
+        var connectionString = DatabaseConnectionString.Resolve(configuration);
+        var parsed = new NpgsqlConnectionStringBuilder(connectionString);
+
+        parsed.Host.Should().Be("supabase-pooler.example.com");
+        parsed.Database.Should().Be("postgres");
+        parsed.Username.Should().Be("postgres.project");
+        parsed.Password.Should().Be("p@ssword");
+        parsed.SslMode.Should().Be(SslMode.Require);
+    }
+
+    [Fact]
+    public void Resolve_HandlesReservedCharactersInSupabasePassword()
+    {
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["SUPABASE_CONNECTION_STRING"] =
+                "postgresql://postgres.project:p@ss#word!@supabase-pooler.example.com:5432/postgres?sslmode=require"
+        });
+
+        var connectionString = DatabaseConnectionString.Resolve(configuration);
+        var parsed = new NpgsqlConnectionStringBuilder(connectionString);
+
+        parsed.Host.Should().Be("supabase-pooler.example.com");
+        parsed.Password.Should().Be("p@ss#word!");
+    }
+
+    [Fact]
+    public void Resolve_DoesNotTreatQueryAtSignAsCredentialSeparator()
+    {
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["SUPABASE_CONNECTION_STRING"] =
+                "postgresql://postgres.project:secret@supabase-pooler.example.com/postgres?application_name=vsr@render"
+        });
+
+        var connectionString = DatabaseConnectionString.Resolve(configuration);
+        var parsed = new NpgsqlConnectionStringBuilder(connectionString);
+
+        parsed.Host.Should().Be("supabase-pooler.example.com");
+        parsed.Password.Should().Be("secret");
+    }
+
+    [Fact]
+    public void Resolve_PreservesDatabaseUrlPrecedenceOverSupabaseFallback()
+    {
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["DATABASE_URL"] = "postgresql://user:secret@primary.example.com/postgres",
+            ["SUPABASE_CONNECTION_STRING"] = "postgresql://user:secret@fallback.example.com/postgres"
+        });
+
+        var connectionString = DatabaseConnectionString.Resolve(configuration);
+
+        new NpgsqlConnectionStringBuilder(connectionString).Host.Should().Be("primary.example.com");
+    }
+
+    [Fact]
+    public void Resolve_AcceptsCaseInsensitivePostgresScheme()
+    {
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["SUPABASE_CONNECTION_STRING"] = "POSTGRESQL://user:secret@db.example.com/postgres"
+        });
+
+        var connectionString = DatabaseConnectionString.Resolve(configuration);
+
+        new NpgsqlConnectionStringBuilder(connectionString).Host.Should().Be("db.example.com");
+    }
+
+    [Fact]
     public void Resolve_RejectsConfigurationWithoutAUsableDatabaseHost()
     {
         var configuration = BuildConfiguration(new Dictionary<string, string?>
