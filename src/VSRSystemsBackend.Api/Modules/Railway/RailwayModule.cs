@@ -11,6 +11,7 @@ using VSRSystemsBackend.Api.Modules.Railway.Application.Inspection;
 using VSRSystemsBackend.Api.Modules.Railway.Application.Maintenance;
 using VSRSystemsBackend.Api.Modules.Railway.Application.CrowdOperations;
 using VSRSystemsBackend.Api.Modules.Railway.Infrastructure.Ingestion;
+using VSRSystemsBackend.Api.Infrastructure.Configuration;
 
 namespace VSRSystemsBackend.Api.Modules.Railway;
 
@@ -50,16 +51,19 @@ public static class RailwayModule
         services.AddScoped<CrowdAdapterAuthenticator>();
         services.AddScoped<CrowdIngestionService>();
         services.AddScoped<ICrowdObservationAdapter, ManualCrowdAdapter>();
-        services.AddHostedService<RailwayEvidenceScanWorker>();
-        services.AddHostedService<CrowdRiskWorker>();
-        services.AddHostedService<InspectionScheduleWorker>();
-        services.AddHostedService<MaintenanceScheduleWorker>();
         services.AddSingleton<IRailwayIntegrationEventSink, RailwayIntegrationEventLogSink>();
-        services.AddHostedService<RailwayOutboxDispatcher>();
+        if (configuration.GetValue("Railway:Enabled", false) || configuration.GetValue("RAILWAY_ENABLED", false))
+        {
+            services.AddHostedService<RailwayEvidenceScanWorker>();
+            services.AddHostedService<CrowdRiskWorker>();
+            services.AddHostedService<InspectionScheduleWorker>();
+            services.AddHostedService<MaintenanceScheduleWorker>();
+            services.AddHostedService<RailwayOutboxDispatcher>();
+        }
         services.AddHealthChecks().AddCheck<RailwayReadinessHealthCheck>("railway", tags: ["ready", "railway"]);
         services.AddDbContext<RailwayDbContext>(options =>
             options.UseNpgsql(
-                configuration.GetConnectionString("DefaultConnection"),
+                DatabaseConnectionString.Resolve(configuration),
                 npgsql =>
                 {
                     npgsql.UseNetTopologySuite();

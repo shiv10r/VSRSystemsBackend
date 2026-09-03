@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using VSRSystemsBackend.Api.Modules.Railway;
 using VSRSystemsBackend.Api.Modules.Railway.Application.Shared;
 using VSRSystemsBackend.Api.Modules.Railway.Infrastructure;
+using VSRSystemsBackend.Api.Modules.Railway.Infrastructure.BackgroundJobs;
 using VSRSystemsBackend.Api.Modules.Railway.Infrastructure.Persistence;
 using Xunit;
 
@@ -27,6 +28,7 @@ public sealed class RailwayModuleRegistrationTests
         Assert.Contains(services, descriptor => descriptor.ServiceType == typeof(IRailwayScopeAccessor));
         Assert.Contains(services, descriptor => descriptor.ServiceType == typeof(IRailwayFeatureGate));
         Assert.Contains(services, descriptor => descriptor.ServiceType == typeof(RailwayDbContext));
+        Assert.DoesNotContain(services, descriptor => descriptor.ImplementationType == typeof(RailwayEvidenceScanWorker));
     }
 
     [Fact]
