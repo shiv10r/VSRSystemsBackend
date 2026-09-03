@@ -329,21 +329,30 @@ builder.Services.AddCors(options =>
 });
 
 // Authentication
-builder.Services.AddAuthentication(options =>
+var authentication = builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = CacheTokenAuthenticationHandler.SchemeName;
     options.DefaultChallengeScheme = CacheTokenAuthenticationHandler.SchemeName;
     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
 .AddScheme<AuthenticationSchemeOptions, CacheTokenAuthenticationHandler>(CacheTokenAuthenticationHandler.SchemeName, _ => { })
-.AddCookie()
-.AddGoogle(options =>
+.AddCookie();
+
+var googleClientId = builder.Configuration["Google:ClientId"];
+var googleClientSecret = builder.Configuration["Google:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleClientId) &&
+    !string.IsNullOrWhiteSpace(googleClientSecret) &&
+    !googleClientId.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase) &&
+    !googleClientSecret.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase))
 {
-    options.ClientId = builder.Configuration["Google:ClientId"] ?? "";
-    options.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? "";
-    options.CallbackPath = "/signin-google";
-    options.SaveTokens = true;
-});
+    authentication.AddGoogle(options =>
+    {
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+        options.CallbackPath = "/signin-google";
+        options.SaveTokens = true;
+    });
+}
 
 var app = builder.Build();
 
