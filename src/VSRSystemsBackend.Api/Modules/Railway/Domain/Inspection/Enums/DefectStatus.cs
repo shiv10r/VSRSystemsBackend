@@ -1,0 +1,3 @@
+namespace VSRSystemsBackend.Api.Modules.Railway.Domain.Inspection;
+
+public enum DefectStatus { Open, Triaged, WorkPlanned, Resolved, Verified, Closed, Rejected }

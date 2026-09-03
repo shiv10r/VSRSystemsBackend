@@ -23,9 +23,14 @@ using VSRSystemsBackend.Api.Platform.Realtime;
 using VSRSystemsBackend.Api.Platform.Storage;
 using VSRSystemsBackend.Api.Platform.Settings;
 using VSRSystemsBackend.Api.Platform.Weather;
+using VSRSystemsBackend.Api.Modules.Railway;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using VSRSystemsBackend.Api.Modules.Railway.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,7 +50,30 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "VSR Systems Backend API", Version = "v1" });
-    c.CustomSchemaIds(type => type.FullName?.Replace('+', '.') ?? type.Name);
+    c.CustomSchemaIds(Program.GetSwaggerSchemaId);
+    c.CustomOperationIds(apiDescription =>
+    {
+        if (!apiDescription.RelativePath?.StartsWith("api/railway", StringComparison.OrdinalIgnoreCase) ?? true)
+            return null;
+
+        var controller = apiDescription.ActionDescriptor.RouteValues["controller"] ?? "endpoint";
+        var action = apiDescription.ActionDescriptor.RouteValues["action"] ?? apiDescription.HttpMethod ?? "operation";
+        return $"railway.{controller}.{action}".ToLowerInvariant();
+    });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "opaque",
+        Description = "VSR authenticated bearer session token.",
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecurityScheme
+        {
+            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" },
+        }] = Array.Empty<string>(),
+    });
 });
 
 var openTelemetry = builder.Services
@@ -57,7 +85,8 @@ var openTelemetry = builder.Services
     .WithMetrics(metrics => metrics
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
-        .AddRuntimeInstrumentation());
+        .AddRuntimeInstrumentation()
+        .AddMeter(RailwayTelemetry.MeterName));
 
 if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
 {
@@ -70,6 +99,11 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOIN
 var databaseConnectionString = DatabaseConnectionString.Resolve(builder.Configuration);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(databaseConnectionString));
+builder.Services.AddRailwayModule(builder.Configuration);
+builder.Services.AddRateLimiter(options => options.AddPolicy("railway-ingestion", context =>
+    RateLimitPartition.GetFixedWindowLimiter(
+        context.Request.Headers["X-Railway-Source-Id"].FirstOrDefault() ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 120, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 })));
 
 // MongoDB is optional and isolated from PostgreSQL-backed modules.
 var mongoSection = builder.Configuration.GetSection(MongoDbOptions.SectionName);
@@ -297,21 +331,30 @@ builder.Services.AddCors(options =>
 });
 
 // Authentication
-builder.Services.AddAuthentication(options =>
+var authentication = builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = CacheTokenAuthenticationHandler.SchemeName;
     options.DefaultChallengeScheme = CacheTokenAuthenticationHandler.SchemeName;
     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
 .AddScheme<AuthenticationSchemeOptions, CacheTokenAuthenticationHandler>(CacheTokenAuthenticationHandler.SchemeName, _ => { })
-.AddCookie()
-.AddGoogle(options =>
+.AddCookie();
+
+var googleClientId = builder.Configuration["Google:ClientId"];
+var googleClientSecret = builder.Configuration["Google:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleClientId) &&
+    !string.IsNullOrWhiteSpace(googleClientSecret) &&
+    !googleClientId.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase) &&
+    !googleClientSecret.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase))
 {
-    options.ClientId = builder.Configuration["Google:ClientId"] ?? "";
-    options.ClientSecret = builder.Configuration["Google:ClientSecret"] ?? "";
-    options.CallbackPath = "/signin-google";
-    options.SaveTokens = true;
-});
+    authentication.AddGoogle(options =>
+    {
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+        options.CallbackPath = "/signin-google";
+        options.SaveTokens = true;
+    });
+}
 
 var app = builder.Build();
 
@@ -326,10 +369,12 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseCors("AllowFrontend");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseSerilogRequestLogging();
 app.MapControllers();
+app.MapRailwayEndpoints();
 app.MapRealtime();
 app.MapGet("/", () => Results.Ok(new { service = "VSR Systems Backend API", status = "healthy" }));
 app.MapHealthChecks("/health", new HealthCheckOptions
@@ -350,6 +395,8 @@ app.MapHealthChecks("/health", new HealthCheckOptions
         });
     }
 });
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 
 // Ensure database is created (skip seeder in production to save memory)
 using (var scope = app.Services.CreateScope())
@@ -413,3 +460,15 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+public partial class Program
+{
+    internal static string GetSwaggerSchemaId(Type type)
+    {
+        if (!type.IsGenericType)
+            return type.FullName?.Replace('+', '.') ?? type.Name;
+
+        var typeName = type.Name[..type.Name.IndexOf('`')];
+        return $"{typeName}Of{string.Join("And", type.GenericTypeArguments.Select(GetSwaggerSchemaId))}";
+    }
+}

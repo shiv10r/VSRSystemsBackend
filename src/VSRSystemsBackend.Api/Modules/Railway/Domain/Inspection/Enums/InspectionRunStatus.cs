@@ -1,0 +1,3 @@
+namespace VSRSystemsBackend.Api.Modules.Railway.Domain.Inspection;
+
+public enum InspectionRunStatus { Draft, Submitted, Accepted, Rejected, Amended }
