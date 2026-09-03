@@ -12,6 +12,7 @@ obj/
 x64/
 x86/
 build/
+artifacts/
 bld/
 [Bb]in/
 [Oo]bj/

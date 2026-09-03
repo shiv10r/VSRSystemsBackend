@@ -1,5 +1,6 @@
 bin/
 obj/
+artifacts/
 *.md
 .git/
 .gitignore
