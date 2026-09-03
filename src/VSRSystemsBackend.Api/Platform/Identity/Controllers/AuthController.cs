@@ -13,6 +13,8 @@ public class AuthController : ControllerBase
 {
     private readonly IDistributedCache _cache;
     private const string TokenKeyPrefix = "auth:token:";
+    private const string AdminEmail = "admin.portal@vsrsystems.com";
+    private const string AdminPassword = "nfeuTYjb7CEAnoK7EV";
 
     public AuthController(IDistributedCache cache)
     {
@@ -45,17 +47,8 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
     {
-        // Simple demo authentication - accept admin credentials or any email/password
-        string fullName;
-        if (dto.Email == "admin.portal@vsrsystems.com" && dto.Password == "nfeuTYjb7CEAnoK7EV")
-        {
-            fullName = "Admin";
-        }
-        else
-        {
-            // For demo: accept any email/password
-            fullName = dto.Email;
-        }
+        if (dto.Email != AdminEmail || dto.Password != AdminPassword)
+            return Unauthorized(new { message = "Invalid email or password." });
 
         var token = Guid.NewGuid().ToString("N");
         var user = new AuthResponseDto
@@ -66,13 +59,13 @@ public class AuthController : ControllerBase
             {
                 Id = "admin-demo",
                 Email = dto.Email,
-                FullName = fullName,
+                FullName = "Admin",
                 Phone = string.Empty,
                 Roles = new List<string> { "admin" }
             }
         };
         await StoreTokenAsync(token, user);
-        return Ok(new { token, username = fullName, role = "admin" });
+        return Ok(new { token, username = "Admin", role = "admin" });
     }
 
     [HttpGet("me")]
